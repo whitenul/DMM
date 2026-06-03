@@ -1,0 +1,47 @@
+[package]
+name = "desk-manager"
+version = "0.1.0"
+description = "A Windows desktop application launcher and manager"
+authors = ["you"]
+edition = "2021"
+
+[lib]
+name = "desk_manager_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon", "image-png"] }
+tauri-plugin-global-shortcut = "2"
+tauri-plugin-shell = "2"
+tauri-plugin-dialog = "2"
+
+rusqlite = { version = "0.35", features = ["bundled"] }
+refinery = { version = "0.9", features = ["rusqlite"] }
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+
+windows = { version = "0.62", features = [
+    "Win32_System_Com",
+    "Win32_UI_Shell",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_Graphics_Gdi",
+    "Win32_Storage_FileSystem",
+    "Win32_System_Registry",
+] }
+windows-core = "0.62"
+
+notify = "8"
+reqwest = { version = "0.12", features = ["rustls-tls"] }
+scraper = "0.22"
+pinyin = { version = "0.10", features = ["heteronym"] }
+walkdir = "2"
+thiserror = "2"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+open = "5"

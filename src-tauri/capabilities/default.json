@@ -1,0 +1,12 @@
+{
+  "identifier": "default",
+  "windows": ["main", "search", "settings"],
+  "permissions": [
+    "core:default",
+    "shell:allow-open",
+    "dialog:allow-open",
+    "dialog:allow-save",
+    "global-shortcut:allow-register",
+    "global-shortcut:allow-unregister"
+  ]
+}

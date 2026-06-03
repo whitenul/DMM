@@ -1,0 +1,47 @@
+:root {
+  --color-bg-solid: rgba(255, 255, 255, 0.7);
+  --color-bg-card: rgba(255, 255, 255, 0.5);
+  --color-bg-hover: rgba(0, 0, 0, 0.04);
+  --color-bg-active: rgba(0, 0, 0, 0.06);
+  --color-text-primary: rgba(0, 0, 0, 0.9);
+  --color-text-secondary: rgba(0, 0, 0, 0.6);
+  --color-accent: #005fb8;
+  --color-accent-hover: #004c8c;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-dialog: 0 8px 32px rgba(0, 0, 0, 0.12);
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s ease;
+}
+
+[data-theme="dark"] {
+  --color-bg-solid: rgba(32, 32, 32, 0.7);
+  --color-bg-card: rgba(44, 44, 44, 0.5);
+  --color-bg-hover: rgba(255, 255, 255, 0.06);
+  --color-bg-active: rgba(255, 255, 255, 0.08);
+  --color-text-primary: rgba(255, 255, 255, 0.9);
+  --color-text-secondary: rgba(255, 255, 255, 0.6);
+  --color-accent: #60cdff;
+  --color-accent-hover: #4db8e8;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
+  background: transparent;
+  color: var(--color-text-primary);
+  user-select: none;
+  overflow: hidden;
+}
