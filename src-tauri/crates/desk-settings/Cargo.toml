@@ -1,0 +1,13 @@
+[package]
+name = "desk-settings"
+version.workspace = true
+edition.workspace = true
+links = "desk-settings"
+
+[build-dependencies]
+tauri-plugin = { version = "2", features = ["build"] }
+
+[dependencies]
+desk-core = { workspace = true }
+tauri = { workspace = true }
+serde = { workspace = true }

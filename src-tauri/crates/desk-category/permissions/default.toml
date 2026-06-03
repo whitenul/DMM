@@ -1,0 +1,11 @@
+[default]
+description = "Default permissions for the category plugin"
+permissions = [
+    "allow-get-categories",
+    "allow-create-category",
+    "allow-update-category",
+    "allow-delete-category",
+    "allow-reorder-categories",
+    "allow-link-folder",
+    "allow-unlink-folder",
+]

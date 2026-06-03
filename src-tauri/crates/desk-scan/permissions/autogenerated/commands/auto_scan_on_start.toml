@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-auto-scan-on-start"
+description = "Enables the auto_scan_on_start command without any pre-configured scope."
+commands.allow = ["auto_scan_on_start"]
+
+[[permission]]
+identifier = "deny-auto-scan-on-start"
+description = "Denies the auto_scan_on_start command without any pre-configured scope."
+commands.deny = ["auto_scan_on_start"]

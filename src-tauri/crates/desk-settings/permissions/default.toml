@@ -1,0 +1,7 @@
+[default]
+description = "Default permissions for the settings plugin"
+permissions = [
+    "allow-load-settings",
+    "allow-update-settings",
+    "allow-save-window-position",
+]

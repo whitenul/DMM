@@ -1,0 +1,6 @@
+[default]
+description = "Default permissions for the icon plugin"
+permissions = [
+    "allow-extract-icon-for-item",
+    "allow-get-item-icon-base64",
+]

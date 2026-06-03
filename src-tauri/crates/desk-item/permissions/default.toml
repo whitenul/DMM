@@ -1,0 +1,13 @@
+[default]
+description = "Default permissions for the item plugin"
+permissions = [
+    "allow-get-items-by-category",
+    "allow-create-item",
+    "allow-update-item",
+    "allow-launch-item",
+    "allow-move-item",
+    "allow-reorder-items",
+    "allow-delete-item",
+    "allow-toggle-pin-item",
+    "allow-batch-delete-items",
+]

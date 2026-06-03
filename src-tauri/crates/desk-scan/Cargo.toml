@@ -1,0 +1,21 @@
+[package]
+name = "desk-scan"
+version.workspace = true
+edition.workspace = true
+links = "desk-scan"
+
+[build-dependencies]
+tauri-plugin = { version = "2", features = ["build"] }
+
+[dependencies]
+desk-core = { workspace = true }
+tauri = { workspace = true }
+serde = { workspace = true }
+rusqlite = { workspace = true }
+windows = { workspace = true }
+windows-core = { workspace = true }
+lnk = { workspace = true }
+walkdir = { workspace = true }
+pinyin = { workspace = true }
+notify = { workspace = true }
+tracing = { workspace = true }

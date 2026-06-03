@@ -1,0 +1,9 @@
+[default]
+description = "Default permissions for the scan plugin"
+permissions = [
+    "allow-scan-start-menu",
+    "allow-scan-uwp-apps",
+    "allow-scan-folder",
+    "allow-import-scanned-apps",
+    "allow-auto-scan-on-start",
+]

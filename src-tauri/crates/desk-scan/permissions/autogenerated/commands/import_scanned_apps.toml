@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-import-scanned-apps"
+description = "Enables the import_scanned_apps command without any pre-configured scope."
+commands.allow = ["import_scanned_apps"]
+
+[[permission]]
+identifier = "deny-import-scanned-apps"
+description = "Denies the import_scanned_apps command without any pre-configured scope."
+commands.deny = ["import_scanned_apps"]

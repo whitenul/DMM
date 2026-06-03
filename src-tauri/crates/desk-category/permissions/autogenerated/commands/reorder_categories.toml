@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-reorder-categories"
+description = "Enables the reorder_categories command without any pre-configured scope."
+commands.allow = ["reorder_categories"]
+
+[[permission]]
+identifier = "deny-reorder-categories"
+description = "Denies the reorder_categories command without any pre-configured scope."
+commands.deny = ["reorder_categories"]

@@ -1,13 +1,55 @@
+# Dependencies
 node_modules/
+
+# Build output
 dist/
+
+# Rust / Tauri backend
 src-tauri/target/
 src-tauri/WixTools/
+src-tauri/gen/
 
+# Logs
 *.log
+npm-debug.log*
+
+# Temporary & backup files
 *.tmp
 *.bak
+*.swp
+*.swo
+*~
 
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# OS generated files
 .DS_Store
+.DS_Store?
 Thumbs.db
+Thumbs.db:encryptable
+Desktop.ini
+ehthumbs.db
 
+# IDE & editor
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# TypeScript
+*.tsbuildinfo
+
+# Trae IDE config
+.trae/
+
+# Project specific
 app-icon.png
+docs/
+
+.dev

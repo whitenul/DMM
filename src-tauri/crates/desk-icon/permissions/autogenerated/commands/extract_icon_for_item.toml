@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-extract-icon-for-item"
+description = "Enables the extract_icon_for_item command without any pre-configured scope."
+commands.allow = ["extract_icon_for_item"]
+
+[[permission]]
+identifier = "deny-extract-icon-for-item"
+description = "Denies the extract_icon_for_item command without any pre-configured scope."
+commands.deny = ["extract_icon_for_item"]

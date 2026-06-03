@@ -1,0 +1,14 @@
+[package]
+name = "desk-category"
+version.workspace = true
+edition.workspace = true
+links = "desk-category"
+
+[build-dependencies]
+tauri-plugin = { version = "2", features = ["build"] }
+
+[dependencies]
+desk-core = { workspace = true }
+tauri = { workspace = true }
+serde = { workspace = true }
+rusqlite = { workspace = true }

@@ -1,0 +1,17 @@
+[package]
+name = "desk-web"
+version.workspace = true
+edition.workspace = true
+links = "desk-web"
+
+[build-dependencies]
+tauri-plugin = { version = "2", features = ["build"] }
+
+[dependencies]
+desk-core = { workspace = true }
+tauri = { workspace = true }
+serde = { workspace = true }
+reqwest = { workspace = true }
+scraper = { workspace = true }
+url = { workspace = true }
+tracing = { workspace = true }

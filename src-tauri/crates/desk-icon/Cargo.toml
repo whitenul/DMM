@@ -1,0 +1,18 @@
+[package]
+name = "desk-icon"
+version.workspace = true
+edition.workspace = true
+links = "desk-icon"
+
+[build-dependencies]
+tauri-plugin = { version = "2", features = ["build"] }
+
+[dependencies]
+desk-core = { workspace = true }
+tauri = { workspace = true }
+serde = { workspace = true }
+rusqlite = { workspace = true }
+windows = { workspace = true }
+png = { workspace = true }
+base64 = { workspace = true }
+tracing = { workspace = true }

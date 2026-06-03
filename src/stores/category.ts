@@ -26,8 +26,35 @@ export const useCategoryStore = defineStore("category", () => {
     await fetchCategories();
   }
 
+  async function updateCategory(
+    id: number,
+    updates: { name?: string; icon?: string; folderPath?: string }
+  ) {
+    await call("update_category", {
+      id,
+      name: updates.name,
+      icon: updates.icon,
+      folderPath: updates.folderPath,
+    });
+    await fetchCategories();
+  }
+
   async function deleteCategory(id: number) {
     await call("delete_category", { id });
+    await fetchCategories();
+  }
+
+  async function reorderCategories(orders: { id: number; sort_order: number }[]) {
+    await call("reorder_categories", { orders });
+  }
+
+  async function linkFolder(categoryId: number, folderPath: string) {
+    await call("link_folder", { categoryId, folderPath });
+    await fetchCategories();
+  }
+
+  async function unlinkFolder(categoryId: number) {
+    await call("unlink_folder", { categoryId });
     await fetchCategories();
   }
 
@@ -41,7 +68,11 @@ export const useCategoryStore = defineStore("category", () => {
     loading,
     fetchCategories,
     createCategory,
+    updateCategory,
     deleteCategory,
+    reorderCategories,
+    linkFolder,
+    unlinkFolder,
     setActiveCategory,
   };
 });

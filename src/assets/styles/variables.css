@@ -1,35 +1,99 @@
+@import "./tokens.css";
+
 :root {
-  --color-bg-solid: rgba(255, 255, 255, 0.7);
-  --color-bg-card: rgba(255, 255, 255, 0.5);
+  --color-bg-solid: var(--dm-gray-20);
+  --color-bg-card: #ffffff;
   --color-bg-hover: rgba(0, 0, 0, 0.04);
   --color-bg-active: rgba(0, 0, 0, 0.06);
+  --color-bg-subtle: var(--dm-gray-10);
+  --color-bg-inset: var(--dm-gray-30);
   --color-text-primary: rgba(0, 0, 0, 0.9);
   --color-text-secondary: rgba(0, 0, 0, 0.6);
-  --color-accent: #005fb8;
-  --color-accent-hover: #004c8c;
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 12px;
-  --spacing-lg: 16px;
-  --spacing-xl: 24px;
-  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04);
-  --shadow-dialog: 0 8px 32px rgba(0, 0, 0, 0.12);
-  --transition-fast: 0.15s ease;
-  --transition-normal: 0.25s ease;
+  --color-text-tertiary: rgba(0, 0, 0, 0.4);
+  --color-text-disabled: rgba(0, 0, 0, 0.25);
+  --color-text-on-accent: #ffffff;
+  --color-text-on-danger: #ffffff;
+  --color-accent: var(--dm-blue-30);
+  --color-accent-hover: var(--dm-blue-20);
+  --color-accent-pressed: var(--dm-blue-10);
+  --color-accent-subtle: var(--dm-blue-100);
+  --color-accent-text: var(--dm-blue-30);
+  --color-danger: var(--dm-red-50);
+  --color-danger-hover: var(--dm-red-40);
+  --color-danger-pressed: var(--dm-red-30);
+  --color-danger-subtle: var(--dm-red-80);
+  --color-warning: var(--dm-yellow-50);
+  --color-warning-subtle: var(--dm-yellow-80);
+  --color-success: var(--dm-green-50);
+  --color-success-subtle: var(--dm-green-80);
+  --color-overlay: rgba(0, 0, 0, 0.3);
+  --color-close-hover: var(--dm-red-40);
+  --color-border: rgba(0, 0, 0, 0.06);
+  --color-border-strong: rgba(0, 0, 0, 0.12);
+  --color-border-accent: var(--dm-blue-30);
+  --color-divider: rgba(0, 0, 0, 0.06);
+  --radius-sm: var(--dm-radius-sm);
+  --radius-md: var(--dm-radius-md);
+  --radius-lg: var(--dm-radius-lg);
+  --radius-xl: var(--dm-radius-xl);
+  --spacing-xs: var(--dm-spacing-2);
+  --spacing-sm: var(--dm-spacing-3);
+  --spacing-md: var(--dm-spacing-4);
+  --spacing-lg: var(--dm-spacing-5);
+  --spacing-xl: var(--dm-spacing-7);
+  --shadow-card: var(--dm-shadow-4);
+  --shadow-dialog: var(--dm-shadow-16);
+  --shadow-icon: var(--dm-shadow-8);
+  --shadow-tooltip: var(--dm-shadow-8);
+  --shadow-fab: var(--dm-shadow-8);
+  --transition-fast: var(--dm-transition-fast);
+  --transition-normal: var(--dm-transition-normal);
+  --font-family: var(--dm-font-family);
+  --font-family-mono: var(--dm-font-family-mono);
+  --font-family-numeric: var(--dm-font-family-numeric);
+  --font-size-sm: var(--dm-font-size-sm);
+  --font-size-md: var(--dm-font-size-md);
+  --font-size-lg: var(--dm-font-size-lg);
+  --font-size-xl: var(--dm-font-size-xl);
 }
 
 [data-theme="dark"] {
-  --color-bg-solid: rgba(32, 32, 32, 0.7);
-  --color-bg-card: rgba(44, 44, 44, 0.5);
+  --color-bg-solid: var(--dm-gray-110);
+  --color-bg-card: var(--dm-gray-100);
   --color-bg-hover: rgba(255, 255, 255, 0.06);
   --color-bg-active: rgba(255, 255, 255, 0.08);
+  --color-bg-subtle: var(--dm-gray-120);
+  --color-bg-inset: var(--dm-gray-130);
   --color-text-primary: rgba(255, 255, 255, 0.9);
   --color-text-secondary: rgba(255, 255, 255, 0.6);
-  --color-accent: #60cdff;
-  --color-accent-hover: #4db8e8;
+  --color-text-tertiary: rgba(255, 255, 255, 0.4);
+  --color-text-disabled: rgba(255, 255, 255, 0.25);
+  --color-text-on-accent: #ffffff;
+  --color-text-on-danger: #ffffff;
+  --color-accent: var(--dm-blue-70);
+  --color-accent-hover: var(--dm-blue-60);
+  --color-accent-pressed: var(--dm-blue-50);
+  --color-accent-subtle: rgba(96, 205, 255, 0.08);
+  --color-accent-text: var(--dm-blue-70);
+  --color-danger: var(--dm-red-60);
+  --color-danger-hover: var(--dm-red-50);
+  --color-danger-pressed: var(--dm-red-40);
+  --color-danger-subtle: rgba(255, 107, 107, 0.12);
+  --color-warning: var(--dm-yellow-50);
+  --color-warning-subtle: rgba(255, 185, 0, 0.12);
+  --color-success: var(--dm-green-50);
+  --color-success-subtle: rgba(0, 204, 106, 0.12);
+  --color-overlay: rgba(0, 0, 0, 0.5);
+  --color-close-hover: var(--dm-red-40);
+  --color-border: rgba(255, 255, 255, 0.06);
+  --color-border-strong: rgba(255, 255, 255, 0.12);
+  --color-border-accent: var(--dm-blue-70);
+  --color-divider: rgba(255, 255, 255, 0.06);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-dialog: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-icon: 0 2px 6px rgba(0, 0, 0, 0.3);
+  --shadow-tooltip: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-fab: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 * {
@@ -39,9 +103,35 @@
 }
 
 body {
-  font-family: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
-  background: transparent;
+  font-family: var(--font-family);
+  font-feature-settings: "ss01", "ss02", "cv01", "tnum";
+  background: var(--color-bg-solid);
   color: var(--color-text-primary);
   user-select: none;
   overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+code, kbd, pre {
+  font-family: var(--font-family-mono);
+}
+
+.numeric, [data-numeric] {
+  font-family: var(--font-family-numeric);
+  font-variant-numeric: tabular-nums;
+}
+
+.sortable-ghost {
+  opacity: 0.4;
+}
+
+.sortable-chosen {
+  box-shadow: 0 0 0 2px var(--color-accent);
+}
+
+.sortable-drag {
+  opacity: 0.9;
+  box-shadow: var(--shadow-dialog);
 }

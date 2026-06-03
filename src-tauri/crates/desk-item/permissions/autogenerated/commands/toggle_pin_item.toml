@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-toggle-pin-item"
+description = "Enables the toggle_pin_item command without any pre-configured scope."
+commands.allow = ["toggle_pin_item"]
+
+[[permission]]
+identifier = "deny-toggle-pin-item"
+description = "Denies the toggle_pin_item command without any pre-configured scope."
+commands.deny = ["toggle_pin_item"]

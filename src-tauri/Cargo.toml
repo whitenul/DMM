@@ -10,21 +10,48 @@ name = "desk_manager_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
-tauri-build = { version = "2", features = [] }
+tauri-build = { workspace = true }
 
 [dependencies]
+tauri = { workspace = true }
+tauri-plugin-shell = { workspace = true }
+tauri-plugin-dialog = { workspace = true }
+tauri-plugin-fs = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+windows = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+tracing-appender = { workspace = true }
+desk-core = { workspace = true }
+desk-category = { path = "crates/desk-category" }
+desk-item = { path = "crates/desk-item" }
+desk-search = { path = "crates/desk-search" }
+desk-scan = { path = "crates/desk-scan" }
+desk-icon = { path = "crates/desk-icon" }
+desk-settings = { path = "crates/desk-settings" }
+desk-web = { path = "crates/desk-web" }
+
+[workspace]
+resolver = "2"
+members = [".", "crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+
+[workspace.dependencies]
+desk-core = { path = "crates/desk-core" }
 tauri = { version = "2", features = ["tray-icon", "image-png"] }
-tauri-plugin-global-shortcut = "2"
+tauri-build = { version = "2", features = [] }
 tauri-plugin-shell = "2"
 tauri-plugin-dialog = "2"
-
+tauri-plugin-fs = "2"
 rusqlite = { version = "0.35", features = ["bundled"] }
 refinery = { version = "0.9", features = ["rusqlite"] }
-
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 toml = "0.8"
-
 windows = { version = "0.62", features = [
     "Win32_System_Com",
     "Win32_UI_Shell",
@@ -32,16 +59,22 @@ windows = { version = "0.62", features = [
     "Win32_Graphics_Gdi",
     "Win32_Storage_FileSystem",
     "Win32_System_Registry",
+    "Management_Deployment",
+    "ApplicationModel",
 ] }
 windows-core = "0.62"
-
 notify = "8"
 reqwest = { version = "0.12", features = ["rustls-tls"] }
 scraper = "0.22"
+url = "2"
 pinyin = { version = "0.10", features = ["heteronym"] }
+lnk = "0.6"
 walkdir = "2"
 thiserror = "2"
+png = "0.17"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync"] }
 tracing = "0.1"
-tracing-subscriber = "0.3"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2"
 open = "5"
+base64 = "0.22"

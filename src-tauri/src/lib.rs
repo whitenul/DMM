@@ -1,41 +1,151 @@
-mod db;
-mod commands;
-mod services;
-mod config;
+mod logging;
 
-use tauri::Manager;
+use desk_core::config::ConfigState;
+use desk_core::db::{
+    resolve_config_path, resolve_logs_dir, DbState, DeskCoreMigrations, MigrationAggregator,
+};
+use desk_scan::DeskScanMigrations;
+use desk_web::DeskWebMigrations;
+use std::sync::Mutex;
+use tauri::{
+    menu::{MenuBuilder, MenuItemBuilder},
+    tray::TrayIconBuilder,
+    AppHandle, Emitter, Manager, WindowEvent,
+};
+
+/// 缓存 AppHandle，用于不需要传参的命令内部调用
+static APP_HANDLE: Mutex<Option<AppHandle>> = Mutex::new(None);
+
+/// 真正强制退出整个进程
+#[tauri::command]
+fn quit_app() {
+    std::process::exit(0);
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .plugin(tauri_plugin_fs::init())
+        .invoke_handler(tauri::generate_handler![quit_app])
+        .on_window_event(|window, event| {
+            // 拦截所有路径触发的窗口关闭请求（X 按钮、Alt+F4、任务管理器右键关闭等）。
+            // 决策权完全交给前端：
+            //   1. 永远 prevent_close 防止窗口被关掉
+            //   2. 向前端 emit "window-close-requested" 事件
+            //   3. 前端根据 settings.close_behavior 决定是弹窗/hide/quit
+            if let WindowEvent::CloseRequested { api, .. } = event {
+                api.prevent_close();
+                let _ = window.app_handle().emit("window-close-requested", ());
+            }
+        })
         .setup(|app| {
-            db::connection::init_db(app)?;
-            let app_data_dir = app
-                .path()
-                .app_data_dir()
-                .map_err(|e: tauri::Error| e.to_string())?;
-            let config_state =
-                config::app_config::ConfigState::new(&app_data_dir).map_err(|e| e.to_string())?;
+            unsafe {
+                let _ = windows::Win32::System::Com::CoInitializeEx(
+                    None,
+                    windows::Win32::System::Com::COINIT_MULTITHREADED,
+                );
+            }
+
+            // 缓存 AppHandle
+            *APP_HANDLE.lock().unwrap() = Some(app.handle().clone());
+
+            let logs_dir = resolve_logs_dir(app.handle()).map_err(|e| e.to_string())?;
+            logging::init(&logs_dir);
+
+            let aggregator = MigrationAggregator::new()
+                .register(DeskCoreMigrations)
+                .register(DeskScanMigrations)
+                .register(DeskWebMigrations);
+            let _db_state = desk_core::db::init_db(app, aggregator)?;
+
+            let config_path = resolve_config_path(app.handle()).map_err(|e| e.to_string())?;
+            let app_data_dir = config_path
+                .parent()
+                .ok_or_else(|| "Cannot resolve app data dir".to_string())?;
+            let config_state = ConfigState::new(app_data_dir).map_err(|e| e.to_string())?;
             app.manage(config_state);
+
+            app.handle().plugin(desk_category::init())?;
+            app.handle().plugin(desk_item::init())?;
+            app.handle().plugin(desk_search::init())?;
+            app.handle().plugin(desk_scan::init())?;
+            app.handle().plugin(desk_icon::init())?;
+            app.handle().plugin(desk_settings::init())?;
+            app.handle().plugin(desk_web::init())?;
+
+            if let Some(main_window) = app.get_webview_window("main") {
+                let config_state = app.state::<ConfigState>();
+                if let Ok(config) = config_state.get() {
+                    let _ = main_window.set_size(tauri::LogicalSize::new(
+                        config.window.width as f64,
+                        config.window.height as f64,
+                    ));
+                    let _ = main_window.set_position(tauri::LogicalPosition::new(
+                        config.window.x as f64,
+                        config.window.y as f64,
+                    ));
+                    let effects = match config.appearance.effect.as_str() {
+                        "mica" => vec![tauri::window::Effect::Mica],
+                        "acrylic" => vec![tauri::window::Effect::Acrylic],
+                        "none" => vec![],
+                        _ => vec![tauri::window::Effect::Mica, tauri::window::Effect::Acrylic],
+                    };
+                    let _ = main_window.set_effects(tauri::utils::config::WindowEffectsConfig {
+                        effects,
+                        ..Default::default()
+                    });
+                }
+            }
+
+            let show_item = MenuItemBuilder::with_id("show", "显示主窗口").build(app)?;
+            let quit_item = MenuItemBuilder::with_id("quit", "退出").build(app)?;
+            let menu = MenuBuilder::new(app)
+                .item(&show_item)
+                .separator()
+                .item(&quit_item)
+                .build()?;
+
+            let _tray = TrayIconBuilder::new()
+                .menu(&menu)
+                .on_menu_event(move |app, event| match event.id().as_ref() {
+                    "show" => {
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                    "quit" => {
+                        // 托盘菜单"退出"是用户明确意图，直接强制退出整个进程
+                        std::process::exit(0);
+                    }
+                    _ => {}
+                })
+                .on_tray_icon_event(|tray, event| {
+                    if let tauri::tray::TrayIconEvent::Click {
+                        button: tauri::tray::MouseButton::Left,
+                        button_state: tauri::tray::MouseButtonState::Up,
+                        ..
+                    } = event
+                    {
+                        let app = tray.app_handle();
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                })
+                .build(app)?;
+
+            let db_state = app.state::<DbState>().inner().clone();
+            let folder_watcher = desk_scan::FolderWatcher::start(app.handle().clone(), db_state);
+            if let Ok(_fw) = folder_watcher {
+                app.manage(_fw);
+            }
+
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![
-            commands::category::get_categories,
-            commands::category::create_category,
-            commands::category::update_category,
-            commands::category::delete_category,
-            commands::category::reorder_categories,
-            commands::item::get_items_by_category,
-            commands::item::create_item,
-            commands::item::launch_item,
-            commands::item::move_item,
-            commands::item::reorder_items,
-            commands::item::delete_item,
-            commands::item::toggle_pin_item,
-        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

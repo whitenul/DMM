@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-scan-start-menu"
+description = "Enables the scan_start_menu command without any pre-configured scope."
+commands.allow = ["scan_start_menu"]
+
+[[permission]]
+identifier = "deny-scan-start-menu"
+description = "Denies the scan_start_menu command without any pre-configured scope."
+commands.deny = ["scan_start_menu"]

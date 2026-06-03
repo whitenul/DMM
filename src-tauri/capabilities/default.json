@@ -1,12 +1,33 @@
 {
   "identifier": "default",
-  "windows": ["main", "search", "settings"],
+  "windows": ["main"],
   "permissions": [
     "core:default",
+    "core:window:allow-show",
+    "core:window:allow-hide",
+    "core:window:allow-close",
+    "core:window:allow-set-focus",
+    "core:window:allow-minimize",
+    "core:window:allow-maximize",
+    "core:window:allow-unmaximize",
+    "core:window:allow-is-maximized",
+    "core:window:allow-set-effects",
+    "core:window:allow-outer-position",
+    "core:window:allow-inner-size",
+    "core:window:allow-scale-factor",
     "shell:allow-open",
     "dialog:allow-open",
     "dialog:allow-save",
-    "global-shortcut:allow-register",
-    "global-shortcut:allow-unregister"
+    {
+      "identifier": "fs:allow-read",
+      "allow": [{ "path": "$APPDATA/**" }]
+    },
+    "desk-settings:default",
+    "desk-category:default",
+    "desk-item:default",
+    "desk-scan:default",
+    "desk-icon:default",
+    "desk-search:default",
+    "desk-web:default"
   ]
 }
