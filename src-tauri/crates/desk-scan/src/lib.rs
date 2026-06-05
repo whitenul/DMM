@@ -1,10 +1,10 @@
-use desk_core::db::DbState;
-use desk_core::domain::category::{Category, CategoryRepo};
-use desk_core::domain::item::{Item, ItemRepo};
+use desk_core::db::compute_pinyin;
+use desk_core::db::{DbState, SqliteCategoryRepo, SqliteItemRepo};
+use desk_core::domain::category::CategoryRepo;
+use desk_core::domain::item::ItemRepo;
 use desk_core::domain::scanned_app::ScannedApp;
 use desk_core::error::AppError;
-use rusqlite::params;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tauri::{plugin::TauriPlugin, Manager, Runtime};
 use walkdir::WalkDir;
 
@@ -21,518 +21,6 @@ pub struct ScanState {
     /// Kept for direct DB access when needed (e.g., FolderWatcher).
     #[allow(dead_code)]
     db: DbState,
-}
-
-// ===========================================================================
-// SqliteItemRepo — local ItemRepo implementation backed by SQLite
-// ===========================================================================
-
-struct SqliteItemRepo {
-    db: DbState,
-}
-
-impl SqliteItemRepo {
-    fn new(db: DbState) -> Self {
-        Self { db }
-    }
-}
-
-const ITEM_COLUMNS: &str =
-    "id, category_id, name, pinyin_name, item_type, path, icon_path, arguments, working_dir, \
-     sort_order, is_pinned, created_at, updated_at";
-
-fn row_to_item(row: &rusqlite::Row<'_>) -> Result<Item, rusqlite::Error> {
-    Ok(Item {
-        id: row.get(0)?,
-        category_id: row.get(1)?,
-        name: row.get(2)?,
-        pinyin_name: row.get(3)?,
-        item_type: row.get(4)?,
-        path: row.get(5)?,
-        icon_path: row.get(6)?,
-        arguments: row.get(7)?,
-        working_dir: row.get(8)?,
-        sort_order: row.get(9)?,
-        is_pinned: row.get::<_, i32>(10)? != 0,
-        created_at: row.get(11)?,
-        updated_at: row.get(12)?,
-    })
-}
-
-impl ItemRepo for SqliteItemRepo {
-    fn get_by_category(&self, category_id: i64) -> Result<Vec<Item>, AppError> {
-        let conn = self.db.lock()?;
-        let mut stmt = conn.prepare(&format!(
-            "SELECT {ITEM_COLUMNS} FROM items WHERE category_id = ?1 ORDER BY is_pinned DESC, sort_order"
-        ))?;
-        let rows = stmt.query_map(params![category_id], row_to_item)?;
-        let mut items = Vec::new();
-        for row in rows {
-            items.push(row?);
-        }
-        Ok(items)
-    }
-
-    fn get_by_id(&self, id: i64) -> Result<Option<Item>, AppError> {
-        let conn = self.db.lock()?;
-        let result = conn.query_row(
-            &format!("SELECT {ITEM_COLUMNS} FROM items WHERE id = ?1"),
-            params![id],
-            row_to_item,
-        );
-        match result {
-            Ok(item) => Ok(Some(item)),
-            Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
-            Err(e) => Err(e.into()),
-        }
-    }
-
-    fn get_path_and_type(&self, id: i64) -> Result<(String, String), AppError> {
-        let conn = self.db.lock()?;
-        let result = conn.query_row(
-            "SELECT path, item_type FROM items WHERE id = ?1",
-            params![id],
-            |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?)),
-        )?;
-        Ok(result)
-    }
-
-    fn create(
-        &self,
-        category_id: i64,
-        name: &str,
-        item_type: &str,
-        path: &str,
-        arguments: Option<&str>,
-        working_dir: Option<&str>,
-    ) -> Result<Item, AppError> {
-        let conn = self.db.lock()?;
-        let pinyin_name = compute_pinyin(name);
-        let max_order: i32 = conn
-            .query_row(
-                "SELECT COALESCE(MAX(sort_order), -1) FROM items WHERE category_id = ?1",
-                params![category_id],
-                |row| row.get(0),
-            )
-            .unwrap_or(-1);
-        conn.execute(
-            "INSERT INTO items (category_id, name, pinyin_name, item_type, path, arguments, \
-             working_dir, sort_order) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-            params![
-                category_id, name, pinyin_name, item_type, path, arguments, working_dir,
-                max_order + 1
-            ],
-        )?;
-        let id = conn.last_insert_rowid();
-        Ok(Item {
-            id,
-            category_id,
-            name: name.to_string(),
-            pinyin_name: Some(pinyin_name),
-            item_type: item_type.to_string(),
-            path: path.to_string(),
-            icon_path: None,
-            arguments: arguments.map(|s| s.to_string()),
-            working_dir: working_dir.map(|s| s.to_string()),
-            sort_order: max_order + 1,
-            is_pinned: false,
-            created_at: String::new(),
-            updated_at: String::new(),
-        })
-    }
-
-    fn update(
-        &self,
-        id: i64,
-        name: Option<&str>,
-        item_type: Option<&str>,
-        path: Option<&str>,
-        arguments: Option<&str>,
-        working_dir: Option<&str>,
-    ) -> Result<(), AppError> {
-        let conn = self.db.lock()?;
-        let mut updates = Vec::new();
-        let mut param_idx = 1usize;
-        let mut param_values: Vec<Box<dyn rusqlite::types::ToSql>> = Vec::new();
-
-        if let Some(n) = name {
-            let pinyin = compute_pinyin(n);
-            updates.push(format!("name = ?{param_idx}"));
-            param_values.push(Box::new(n.to_string()));
-            param_idx += 1;
-            updates.push(format!("pinyin_name = ?{param_idx}"));
-            param_values.push(Box::new(pinyin));
-            param_idx += 1;
-        }
-        if let Some(t) = item_type {
-            updates.push(format!("item_type = ?{param_idx}"));
-            param_values.push(Box::new(t.to_string()));
-            param_idx += 1;
-        }
-        if let Some(p) = path {
-            updates.push(format!("path = ?{param_idx}"));
-            param_values.push(Box::new(p.to_string()));
-            param_idx += 1;
-        }
-        if let Some(a) = arguments {
-            updates.push(format!("arguments = ?{param_idx}"));
-            param_values.push(Box::new(a.to_string()));
-            param_idx += 1;
-        }
-        if let Some(w) = working_dir {
-            updates.push(format!("working_dir = ?{param_idx}"));
-            param_values.push(Box::new(w.to_string()));
-            param_idx += 1;
-        }
-
-        if updates.is_empty() {
-            return Ok(());
-        }
-
-        updates.push("updated_at = datetime('now')".to_string());
-        let sql = format!(
-            "UPDATE items SET {} WHERE id = ?{param_idx}",
-            updates.join(", ")
-        );
-        param_values.push(Box::new(id));
-        let refs: Vec<&dyn rusqlite::types::ToSql> =
-            param_values.iter().map(|p| p.as_ref()).collect();
-        conn.execute(&sql, refs.as_slice())?;
-        Ok(())
-    }
-
-    fn delete(&self, id: i64) -> Result<(), AppError> {
-        let conn = self.db.lock()?;
-        conn.execute("DELETE FROM items WHERE id = ?1", params![id])?;
-        Ok(())
-    }
-
-    fn move_to_category(&self, id: i64, category_id: i64) -> Result<(), AppError> {
-        let conn = self.db.lock()?;
-        let max_order: i32 = conn
-            .query_row(
-                "SELECT COALESCE(MAX(sort_order), -1) FROM items WHERE category_id = ?1",
-                params![category_id],
-                |row| row.get(0),
-            )
-            .unwrap_or(-1);
-        conn.execute(
-            "UPDATE items SET category_id = ?1, sort_order = ?2, updated_at = datetime('now') \
-             WHERE id = ?3",
-            params![category_id, max_order + 1, id],
-        )?;
-        Ok(())
-    }
-
-    fn reorder(&self, orders: &[(i64, i32)]) -> Result<(), AppError> {
-        let conn = self.db.lock()?;
-        for (id, sort_order) in orders {
-            conn.execute(
-                "UPDATE items SET sort_order = ?1, updated_at = datetime('now') WHERE id = ?2",
-                params![sort_order, id],
-            )?;
-        }
-        Ok(())
-    }
-
-    fn toggle_pin(&self, id: i64) -> Result<(), AppError> {
-        let conn = self.db.lock()?;
-        conn.execute(
-            "UPDATE items SET is_pinned = CASE WHEN is_pinned = 0 THEN 1 ELSE 0 END, \
-             updated_at = datetime('now') WHERE id = ?1",
-            params![id],
-        )?;
-        Ok(())
-    }
-
-    fn batch_delete(&self, ids: &[i64]) -> Result<usize, AppError> {
-        if ids.is_empty() {
-            return Ok(0);
-        }
-        let conn = self.db.lock()?;
-        let placeholders: Vec<String> = ids
-            .iter()
-            .enumerate()
-            .map(|(i, _)| format!("?{}", i + 1))
-            .collect();
-        let sql = format!(
-            "DELETE FROM items WHERE id IN ({})",
-            placeholders.join(",")
-        );
-        let param_values: Vec<Box<dyn rusqlite::types::ToSql>> =
-            ids.iter().map(|id| Box::new(*id) as Box<dyn rusqlite::types::ToSql>).collect();
-        let refs: Vec<&dyn rusqlite::types::ToSql> =
-            param_values.iter().map(|p| p.as_ref()).collect();
-        let deleted = conn.execute(&sql, refs.as_slice())?;
-        tracing::info!("Batch deleted {} items", deleted);
-        Ok(deleted)
-    }
-
-    fn update_icon_path(&self, id: i64, icon_path: &str) -> Result<(), AppError> {
-        let conn = self.db.lock()?;
-        conn.execute(
-            "UPDATE items SET icon_path = ?1 WHERE id = ?2",
-            params![icon_path, id],
-        )?;
-        Ok(())
-    }
-
-    fn find_id_by_path_and_category(
-        &self,
-        path: &str,
-        category_id: i64,
-        icon_null_only: bool,
-    ) -> Result<Option<i64>, AppError> {
-        let conn = self.db.lock()?;
-        let sql = if icon_null_only {
-            "SELECT id FROM items WHERE path = ?1 AND category_id = ?2 AND icon_path IS NULL \
-             LIMIT 1"
-        } else {
-            "SELECT id FROM items WHERE path = ?1 AND category_id = ?2 LIMIT 1"
-        };
-        let result = conn.query_row(sql, params![path, category_id], |row| {
-            row.get::<_, i64>(0)
-        });
-        match result {
-            Ok(id) => Ok(Some(id)),
-            Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
-            Err(e) => Err(e.into()),
-        }
-    }
-
-    fn exists_by_path_and_category(&self, path: &str, category_id: i64) -> Result<bool, AppError> {
-        let conn = self.db.lock()?;
-        let count: i32 = conn.query_row(
-            "SELECT COUNT(*) FROM items WHERE path = ?1 AND category_id = ?2",
-            params![path, category_id],
-            |row| row.get(0),
-        )?;
-        Ok(count > 0)
-    }
-
-    fn create_with_pinyin(
-        &self,
-        category_id: i64,
-        name: &str,
-        pinyin_name: &str,
-        item_type: &str,
-        path: &str,
-        arguments: Option<&str>,
-        working_dir: Option<&str>,
-        sort_order: i32,
-    ) -> Result<(), AppError> {
-        let conn = self.db.lock()?;
-        conn.execute(
-            "INSERT INTO items (category_id, name, pinyin_name, item_type, path, arguments, \
-             working_dir, sort_order) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-            params![
-                category_id, name, pinyin_name, item_type, path, arguments, working_dir,
-                sort_order
-            ],
-        )?;
-        Ok(())
-    }
-}
-
-// ===========================================================================
-// SqliteCategoryRepo — local CategoryRepo implementation backed by SQLite
-// ===========================================================================
-
-struct SqliteCategoryRepo {
-    db: DbState,
-}
-
-impl SqliteCategoryRepo {
-    fn new(db: DbState) -> Self {
-        Self { db }
-    }
-}
-
-impl CategoryRepo for SqliteCategoryRepo {
-    fn get_all(&self) -> Result<Vec<Category>, AppError> {
-        let conn = self.db.lock()?;
-        let mut stmt = conn.prepare(
-            "SELECT id, name, parent_id, sort_order, icon, folder_path, created_at, updated_at \
-             FROM categories ORDER BY sort_order",
-        )?;
-        let rows = stmt.query_map([], |row| {
-            Ok(Category {
-                id: row.get(0)?,
-                name: row.get(1)?,
-                parent_id: row.get(2)?,
-                sort_order: row.get(3)?,
-                icon: row.get(4)?,
-                folder_path: row.get(5)?,
-                created_at: row.get(6)?,
-                updated_at: row.get(7)?,
-            })
-        })?;
-        let mut categories = Vec::new();
-        for row in rows {
-            categories.push(row?);
-        }
-        Ok(categories)
-    }
-
-    fn get_by_id(&self, id: i64) -> Result<Option<Category>, AppError> {
-        let conn = self.db.lock()?;
-        let result = conn.query_row(
-            "SELECT id, name, parent_id, sort_order, icon, folder_path, created_at, updated_at \
-             FROM categories WHERE id = ?1",
-            params![id],
-            |row| {
-                Ok(Category {
-                    id: row.get(0)?,
-                    name: row.get(1)?,
-                    parent_id: row.get(2)?,
-                    sort_order: row.get(3)?,
-                    icon: row.get(4)?,
-                    folder_path: row.get(5)?,
-                    created_at: row.get(6)?,
-                    updated_at: row.get(7)?,
-                })
-            },
-        );
-        match result {
-            Ok(category) => Ok(Some(category)),
-            Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
-            Err(e) => Err(e.into()),
-        }
-    }
-
-    fn create(
-        &self,
-        name: &str,
-        parent_id: Option<i64>,
-        icon: Option<&str>,
-    ) -> Result<Category, AppError> {
-        let conn = self.db.lock()?;
-        let max_order: i32 = conn
-            .query_row(
-                "SELECT COALESCE(MAX(sort_order), -1) FROM categories WHERE parent_id IS ?",
-                params![parent_id],
-                |row| row.get(0),
-            )
-            .unwrap_or(-1);
-        conn.execute(
-            "INSERT INTO categories (name, parent_id, sort_order, icon) VALUES (?1, ?2, ?3, ?4)",
-            params![name, parent_id, max_order + 1, icon],
-        )?;
-        let id = conn.last_insert_rowid();
-        Ok(Category {
-            id,
-            name: name.to_string(),
-            parent_id,
-            sort_order: max_order + 1,
-            icon: icon.map(String::from),
-            folder_path: None,
-            created_at: String::new(),
-            updated_at: String::new(),
-        })
-    }
-
-    fn update(
-        &self,
-        id: i64,
-        name: Option<&str>,
-        icon: Option<&str>,
-        parent_id: Option<Option<i64>>,
-        folder_path: Option<&str>,
-    ) -> Result<(), AppError> {
-        let conn = self.db.lock()?;
-        let mut updates = Vec::new();
-        let mut param_idx = 1usize;
-        let mut param_values: Vec<Box<dyn rusqlite::types::ToSql>> = Vec::new();
-
-        if let Some(n) = name {
-            updates.push(format!("name = ?{param_idx}"));
-            param_values.push(Box::new(n.to_string()));
-            param_idx += 1;
-        }
-        if let Some(i) = icon {
-            updates.push(format!("icon = ?{param_idx}"));
-            param_values.push(Box::new(i.to_string()));
-            param_idx += 1;
-        }
-        if let Some(p) = parent_id {
-            updates.push(format!("parent_id = ?{param_idx}"));
-            param_values.push(Box::new(p));
-            param_idx += 1;
-        }
-        if let Some(fp) = folder_path {
-            updates.push(format!("folder_path = ?{param_idx}"));
-            param_values.push(Box::new(fp.to_string()));
-            param_idx += 1;
-        }
-
-        if updates.is_empty() {
-            return Ok(());
-        }
-
-        updates.push("updated_at = datetime('now')".to_string());
-        let sql = format!(
-            "UPDATE categories SET {} WHERE id = ?{param_idx}",
-            updates.join(", ")
-        );
-        param_values.push(Box::new(id));
-        let refs: Vec<&dyn rusqlite::types::ToSql> =
-            param_values.iter().map(|p| p.as_ref()).collect();
-        conn.execute(&sql, refs.as_slice())?;
-        Ok(())
-    }
-
-    fn delete(&self, id: i64) -> Result<(), AppError> {
-        let conn = self.db.lock()?;
-        conn.execute("DELETE FROM categories WHERE id = ?1", params![id])?;
-        Ok(())
-    }
-
-    fn reorder(&self, orders: &[(i64, i32)]) -> Result<(), AppError> {
-        let conn = self.db.lock()?;
-        for (id, sort_order) in orders {
-            conn.execute(
-                "UPDATE categories SET sort_order = ?1, updated_at = datetime('now') \
-                 WHERE id = ?2",
-                params![sort_order, id],
-            )?;
-        }
-        Ok(())
-    }
-
-    fn link_folder(&self, id: i64, folder_path: &str) -> Result<(), AppError> {
-        let conn = self.db.lock()?;
-        conn.execute(
-            "UPDATE categories SET folder_path = ?1 WHERE id = ?2",
-            params![folder_path, id],
-        )?;
-        Ok(())
-    }
-
-    fn unlink_folder(&self, id: i64) -> Result<(), AppError> {
-        let conn = self.db.lock()?;
-        conn.execute(
-            "UPDATE categories SET folder_path = NULL WHERE id = ?1",
-            params![id],
-        )?;
-        Ok(())
-    }
-}
-
-// ===========================================================================
-// Pinyin helper
-// ===========================================================================
-
-fn compute_pinyin(name: &str) -> String {
-    use pinyin::ToPinyinMulti;
-    let mut result = String::new();
-    for pinyin_result in name.to_pinyin_multi() {
-        if let Some(py) = pinyin_result {
-            if let Some(first_letter) = py.get(0).plain().chars().next() {
-                result.push(first_letter.to_ascii_lowercase());
-            }
-        }
-    }
-    result
 }
 
 // ===========================================================================
@@ -614,8 +102,54 @@ pub fn scan_start_menu() -> Result<Vec<ScannedApp>, AppError> {
         }
     }
 
-    apps.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    apps.sort_by_key(|a| a.name.to_lowercase());
     Ok(apps)
+}
+
+/// Scan a single file and return a ScannedApp if it's a supported type.
+pub fn scan_single_file(path: &Path) -> Option<ScannedApp> {
+    let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+    if !["exe", "lnk", "url", "bat"].contains(&ext) {
+        return None;
+    }
+
+    let name = path
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("Unknown")
+        .to_string();
+
+    let app_type = match ext {
+        "exe" => "App",
+        "url" => "Web",
+        _ => "File",
+    };
+
+    let path_str = path.to_string_lossy().to_string();
+
+    if ext == "lnk" {
+        let lnk_info = parse_lnk_info(path);
+        Some(ScannedApp {
+            name,
+            path: lnk_info
+                .as_ref()
+                .map(|i| i.target.clone())
+                .unwrap_or(path_str),
+            icon_path: None,
+            app_type: app_type.to_string(),
+            arguments: lnk_info.as_ref().and_then(|i| i.arguments.clone()),
+            working_dir: lnk_info.as_ref().and_then(|i| i.working_dir.clone()),
+        })
+    } else {
+        Some(ScannedApp {
+            name,
+            path: path_str,
+            icon_path: None,
+            app_type: app_type.to_string(),
+            arguments: None,
+            working_dir: None,
+        })
+    }
 }
 
 pub fn scan_folder(folder_path: &str) -> Result<Vec<ScannedApp>, AppError> {
@@ -678,7 +212,7 @@ pub fn scan_folder(folder_path: &str) -> Result<Vec<ScannedApp>, AppError> {
         }
     }
 
-    apps.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    apps.sort_by_key(|a| a.name.to_lowercase());
     Ok(apps)
 }
 
@@ -688,9 +222,21 @@ pub fn scan_uwp_apps() -> Result<Vec<ScannedApp>, AppError> {
 
     let mut apps = Vec::new();
     let manager = PackageManager::new().map_err(|e| AppError::Scan(e.to_string()))?;
-    let packages = manager
-        .FindPackages()
-        .map_err(|e| AppError::Scan(e.to_string()))?;
+
+    // FindPackages() 枚举所有包，非管理员可能返回 0x80070005
+    // 降级方案：尝试 FindPackages，权限不足时返回空列表而非报错
+    let packages = match manager.FindPackages() {
+        Ok(p) => p,
+        Err(e) => {
+            let code = e.code();
+            // 0x80070005 = E_ACCESSDENIED
+            if code == windows_core::HRESULT(0x80070005_u32 as i32) {
+                tracing::warn!("UWP scan: FindPackages access denied (not running as admin), skipping UWP scan");
+                return Ok(apps);
+            }
+            return Err(AppError::Scan(e.to_string()));
+        }
+    };
 
     for package in packages {
         let is_framework: bool = package.IsFramework().unwrap_or(false);
@@ -733,7 +279,7 @@ pub fn scan_uwp_apps() -> Result<Vec<ScannedApp>, AppError> {
         });
     }
 
-    apps.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    apps.sort_by_key(|a| a.name.to_lowercase());
     apps.dedup_by(|a, b| a.path == b.path);
     Ok(apps)
 }
@@ -849,12 +395,14 @@ use tauri::{AppHandle, Emitter};
 
 pub struct FolderWatcher {
     _watcher: RecommendedWatcher,
-    _rx_thread: std::thread::JoinHandle<()>,
+    stop_flag: std::sync::Arc<std::sync::Mutex<bool>>,
+    _rx_thread: Option<std::thread::JoinHandle<()>>,
 }
 
 impl FolderWatcher {
     pub fn start(app: AppHandle, db: DbState) -> Result<Self, AppError> {
         let (tx, rx) = mpsc::channel::<Event>();
+        let stop_flag = std::sync::Arc::new(std::sync::Mutex::new(false));
 
         let mut watcher = RecommendedWatcher::new(
             move |res: Result<Event, notify::Error>| {
@@ -866,7 +414,7 @@ impl FolderWatcher {
         )
         .map_err(|e| AppError::Scan(e.to_string()))?;
 
-        // Query categories with folder_path using CategoryRepo
+        // Query categories with folder_path using SqliteCategoryRepo from desk-core
         let category_repo = SqliteCategoryRepo::new(db.clone());
         let categories: Vec<(i64, String)> = category_repo
             .get_all()?
@@ -883,47 +431,91 @@ impl FolderWatcher {
             }
         }
 
-        let rx_thread = std::thread::spawn(move || {
-            let debounce = Duration::from_millis(500);
-            let mut last_event_time = std::time::Instant::now();
+        let stop = stop_flag.clone();
+        let rx_thread = std::thread::Builder::new()
+            .name("folder-watcher".into())
+            .spawn(move || {
+                let debounce = Duration::from_millis(500);
+                let mut pending_paths: std::collections::HashSet<PathBuf> = std::collections::HashSet::new();
+                let mut last_flush = std::time::Instant::now();
 
-            while let Ok(event) = rx.recv_timeout(Duration::from_secs(30)) {
-                match event.kind {
-                    EventKind::Create(_) | EventKind::Remove(_) | EventKind::Modify(_) => {
-                        let now = std::time::Instant::now();
-                        if now.duration_since(last_event_time) < debounce {
-                            continue;
-                        }
-                        last_event_time = now;
+                loop {
+                    if *stop.lock().unwrap() {
+                        break;
+                    }
 
-                        for path in &event.paths {
-                            let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-                            if !["exe", "lnk", "url", "bat"].contains(&ext) {
-                                continue;
+                    match rx.recv_timeout(Duration::from_millis(100)) {
+                        Ok(event) => {
+                            if matches!(event.kind,
+                                EventKind::Create(_) | EventKind::Remove(_) | EventKind::Modify(_)
+                            ) {
+                                for path in &event.paths {
+                                    let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+                                    if ["exe", "lnk", "url", "bat"].contains(&ext) {
+                                        pending_paths.insert(path.clone());
+                                    }
+                                }
                             }
+                        }
+                        Err(mpsc::RecvTimeoutError::Timeout) => {}
+                        Err(mpsc::RecvTimeoutError::Disconnected) => break,
+                    }
 
+                    // Debounce: wait for events to settle before processing
+                    if !pending_paths.is_empty() && last_flush.elapsed() >= debounce {
+                        let paths_to_process: Vec<PathBuf> = pending_paths.drain().collect();
+                        last_flush = std::time::Instant::now();
+
+                        // Incremental update: only process changed files
+                        let item_repo = SqliteItemRepo::new(db.clone());
+                        for path in &paths_to_process {
+                            // Find which category this path belongs to
                             for (cat_id, folder) in &categories {
                                 let folder_path = PathBuf::from(folder);
                                 if path.starts_with(&folder_path) {
-                                    let apps = scan_folder(folder).unwrap_or_default();
-                                    // Create a local ItemRepo for the import
-                                    let item_repo = SqliteItemRepo::new(db.clone());
-                                    import_scanned_apps(&item_repo, *cat_id, &apps).ok();
+                                    if path.exists() {
+                                        // File added/modified: scan single file and import
+                                        if let Some(app) = scan_single_file(path) {
+                                            import_scanned_apps(&item_repo, *cat_id, &[app]).ok();
+                                        }
+                                    } else {
+                                        // File removed: delete from DB by path
+                                        item_repo.exists_by_path_and_category(
+                                            &path.to_string_lossy(), *cat_id
+                                        ).ok();
+                                        // Note: We'd need a delete_by_path method for true incremental
+                                        // For now, fall back to full rescan of the folder
+                                        let apps = scan_folder(folder).unwrap_or_default();
+                                        import_scanned_apps(&item_repo, *cat_id, &apps).ok();
+                                    }
                                     let _ = app.emit("folder-changed", *cat_id);
                                     break;
                                 }
                             }
                         }
                     }
-                    _ => {}
                 }
-            }
-        });
+            })
+            .map_err(|e| AppError::Scan(e.to_string()))?;
 
         Ok(Self {
             _watcher: watcher,
-            _rx_thread: rx_thread,
+            stop_flag,
+            _rx_thread: Some(rx_thread),
         })
+    }
+
+    pub fn stop(&mut self) {
+        *self.stop_flag.lock().unwrap() = true;
+        if let Some(thread) = self._rx_thread.take() {
+            let _ = thread.join();
+        }
+    }
+}
+
+impl Drop for FolderWatcher {
+    fn drop(&mut self) {
+        self.stop();
     }
 }
 

@@ -38,12 +38,50 @@ const PLUGIN_COMMAND_MAP: Record<string, string> = {
   load_settings: "plugin:desk-settings|load_settings",
   update_settings: "plugin:desk-settings|update_settings",
   save_window_position: "plugin:desk-settings|save_window_position",
+  get_system_accent_color: "plugin:desk-settings|get_system_accent_color",
+  list_custom_themes: "plugin:desk-settings|list_custom_themes",
+  save_custom_theme: "plugin:desk-settings|save_custom_theme",
+  delete_custom_theme: "plugin:desk-settings|delete_custom_theme",
 
   fetch_web_meta: "plugin:desk-web|fetch_web_meta",
 };
 
 function resolveCommand(command: string): string {
   return PLUGIN_COMMAND_MAP[command] ?? command;
+}
+
+// Icon cache — avoids repeated IPC calls for the same item
+const iconCache = new Map<number, string>();
+
+export function useIconCache() {
+  const { call } = useTauriCommand();
+
+  async function getIcon(itemId: number): Promise<string | null> {
+    // Check cache first
+    if (iconCache.has(itemId)) {
+      return iconCache.get(itemId)!;
+    }
+
+    try {
+      const base64 = await call<string | null>("get_item_icon_base64", { itemId });
+      if (base64) {
+        iconCache.set(itemId, base64);
+      }
+      return base64;
+    } catch {
+      return null;
+    }
+  }
+
+  function invalidateIcon(itemId: number) {
+    iconCache.delete(itemId);
+  }
+
+  function clearIconCache() {
+    iconCache.clear();
+  }
+
+  return { getIcon, invalidateIcon, clearIconCache };
 }
 
 export function useTauriCommand() {

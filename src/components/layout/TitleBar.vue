@@ -1,17 +1,12 @@
 <template>
-  <div class="titlebar">
+  <div class="titlebar" role="titlebar" @mousedown="onTitlebarMouseDown">
     <div class="titlebar-left">
-      <span class="titlebar-title" data-tauri-drag-region>Desk Manager</span>
+      <span class="titlebar-title">Desk Manager</span>
     </div>
     <div class="titlebar-right">
       <button class="titlebar-btn" @click="onMinimize" title="最小化">
         <svg width="12" height="12" viewBox="0 0 12 12">
           <rect y="5" width="12" height="1" fill="currentColor" />
-        </svg>
-      </button>
-      <button class="titlebar-btn" @click="onToggleMaximize" title="最大化/还原">
-        <svg width="12" height="12" viewBox="0 0 12 12">
-          <rect x="1" y="1" width="10" height="10" stroke="currentColor" stroke-width="1.2" fill="none" />
         </svg>
       </button>
       <button class="titlebar-btn close-btn" @click="onCloseClick" title="关闭">
@@ -31,31 +26,28 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useWindowClose } from "@/composables/useWindowClose";
 
-/**
- * TitleBar 上的 X 按钮只需要调用 useWindowClose.requestClose()，
- * 真正的关闭决策（弹窗/hide/quit）由 App.vue 中挂载的全局监听器处理。
- * 这样设计保证 X 按钮、Alt+F4、托盘右键等所有路径都走同一套逻辑。
- */
 const windowClose = useWindowClose();
+
+function onTitlebarMouseDown(e: MouseEvent) {
+  // 只响应左键
+  if (e.button !== 0) return;
+  // 排除交互元素（按钮等）
+  const target = e.target as HTMLElement;
+  if (target.closest("button, a, input, select, textarea")) return;
+
+  // 阻止默认行为避免文本选择
+  e.preventDefault();
+  // 启动窗口拖拽（需要 capabilities 中 core:window:allow-start-dragging 权限）
+  getCurrentWindow().startDragging().catch((err) => {
+    console.error("startDragging failed", err);
+  });
+}
 
 async function onMinimize() {
   try {
     await getCurrentWindow().minimize();
   } catch (e) {
     console.error("minimize failed", e);
-  }
-}
-
-async function onToggleMaximize() {
-  try {
-    const win = getCurrentWindow();
-    if (await win.isMaximized()) {
-      await win.unmaximize();
-    } else {
-      await win.maximize();
-    }
-  } catch (e) {
-    console.error("toggle maximize failed", e);
   }
 }
 
@@ -71,7 +63,7 @@ async function onCloseClick() {
   justify-content: space-between;
   height: 36px;
   padding-left: 12px;
-  background: var(--color-bg-solid);
+  background: transparent;
   user-select: none;
 }
 

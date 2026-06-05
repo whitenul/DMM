@@ -1,5 +1,8 @@
 <template>
-  <div class="app-layout">
+  <div class="bg-layer" />
+  <div class="bg-overlay" />
+  <div class="glass-bg" />
+  <div class="app-layout glass-layer">
     <TitleBar />
     <div class="app-body">
       <Sidebar />
@@ -25,12 +28,14 @@
 import { onMounted, onBeforeUnmount } from "vue";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
+import { register, unregister } from '@tauri-apps/plugin-global-shortcut';
 import { useCategoryStore } from "@/stores/category";
 import { useSettingsStore } from "@/stores/settings";
 import { useToastStore } from "@/stores/toast";
 import { useUIStore } from "@/stores/ui";
-import { useTheme } from "@/composables/useTheme";
+import { useThemeStore } from "@/stores/theme";
 import { useWindowClose } from "@/composables/useWindowClose";
+import { initI18n } from "@/composables/useI18n";
 import TitleBar from "@/components/layout/TitleBar.vue";
 import Sidebar from "@/components/layout/Sidebar.vue";
 import SearchOverlay from "@/components/search/SearchOverlay.vue";
@@ -41,7 +46,7 @@ const categoryStore = useCategoryStore();
 const settingsStore = useSettingsStore();
 const toast = useToastStore();
 const uiStore = useUIStore();
-const theme = useTheme();
+const themeStore = useThemeStore();
 
 // 解构 composable 返回值，保证模板中 ref 自动解包
 const {
@@ -61,7 +66,8 @@ let unlistenKeydown: ((e: KeyboardEvent) => void) | null = null;
 
 onMounted(async () => {
   await settingsStore.loadSettings();
-  theme.init();
+  initI18n();
+  themeStore.init();
   await categoryStore.fetchCategories();
 
   unlistenFolderChanged = await listen<number>("folder-changed", async (event) => {
@@ -81,6 +87,19 @@ onMounted(async () => {
     // auto scan failure is non-critical
   }
 
+  // Register global search shortcut
+  try {
+    const shortcut = settingsStore.config?.shortcut?.global_search || 'Ctrl+Shift+Space';
+    await register(shortcut, (event) => {
+      if (event.state === 'Pressed') {
+        uiStore.toggleSearchOverlay();
+      }
+    });
+  } catch (e) {
+    console.warn('[App] Failed to register global shortcut:', e);
+    // Fallback: the shortcut may already be registered or not supported
+  }
+
   unlistenKeydown = (e: KeyboardEvent) => {
     if (e.ctrlKey && e.shiftKey && e.code === "Space") {
       e.preventDefault();
@@ -92,9 +111,16 @@ onMounted(async () => {
   window.addEventListener("keydown", unlistenKeydown);
 });
 
-onBeforeUnmount(() => {
+onBeforeUnmount(async () => {
   stopListening();
   unlistenFolderChanged?.();
+  // Unregister global shortcut
+  try {
+    const shortcut = settingsStore.config?.shortcut?.global_search || 'Ctrl+Shift+Space';
+    await unregister(shortcut);
+  } catch {
+    // shortcut may not have been registered
+  }
   if (unlistenKeydown) {
     window.removeEventListener("keydown", unlistenKeydown);
     unlistenKeydown = null;
@@ -110,7 +136,12 @@ onBeforeUnmount(() => {
   width: 100vw;
   overflow: hidden;
   border-radius: var(--radius-lg);
+  /* 边框随透明度淡出，避免高透明度时的边框蒙版 */
   border: 1px solid var(--color-bg-hover);
+  border-color: color-mix(in srgb, var(--color-bg-hover) calc(100% * (1 - var(--app-opacity, 0))), transparent);
+  /* 在 glass-bg (z:2) 之上 */
+  position: relative;
+  z-index: 3;
 }
 
 .app-body {

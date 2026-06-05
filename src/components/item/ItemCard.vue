@@ -2,6 +2,8 @@
   <div
     class="item-card"
     :class="{ pinned: item.is_pinned, selected: selected }"
+    role="button"
+    :aria-label="item.name"
     @click="onClick"
     @contextmenu.prevent="$emit('contextmenu', $event)"
   >

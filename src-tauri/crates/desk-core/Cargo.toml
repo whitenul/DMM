@@ -8,7 +8,8 @@ tauri = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 rusqlite = { workspace = true }
-refinery = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
 toml = { workspace = true }
+pinyin = { workspace = true }
+fuzzy-matcher = { workspace = true }

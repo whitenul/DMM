@@ -30,11 +30,16 @@ impl DbState {
 
     fn open_with_pragma(db_path: &Path) -> Result<Connection, AppError> {
         let conn = Connection::open(db_path)?;
-        conn.execute_batch("PRAGMA foreign_keys=ON;")?;
-        if conn.execute_batch("PRAGMA journal_mode=WAL;").is_err() {
-            tracing::warn!("WAL mode unavailable, falling back to DELETE mode");
-            conn.execute_batch("PRAGMA journal_mode=DELETE;")?;
-        }
+        conn.execute_batch(
+            "PRAGMA foreign_keys=ON;
+             PRAGMA journal_mode=WAL;
+             PRAGMA synchronous=NORMAL;
+             PRAGMA busy_timeout=5000;
+             PRAGMA cache_size=-64000;
+             PRAGMA temp_store=MEMORY;
+             PRAGMA mmap_size=268435456;
+             PRAGMA wal_autocheckpoint=1000;"
+        )?;
         Ok(conn)
     }
 

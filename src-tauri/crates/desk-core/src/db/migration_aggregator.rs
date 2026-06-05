@@ -1,5 +1,16 @@
 use crate::error::AppError;
 use rusqlite::Connection;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
+
+/// Compute a lightweight checksum for migration SQL content.
+/// Uses DefaultHasher for speed — not cryptographic, but sufficient for
+/// detecting accidental edits to already-applied migrations.
+fn compute_checksum(s: &str) -> String {
+    let mut hasher = DefaultHasher::new();
+    s.hash(&mut hasher);
+    format!("{:016x}", hasher.finish())
+}
 
 /// 每个 Plugin 通过此 trait 贡献自己的 migrations
 pub trait MigrationSource: Send + Sync {
@@ -59,15 +70,23 @@ impl MigrationAggregator {
                     .unwrap_or(false);
 
                 if already_applied {
+                    let current_checksum = compute_checksum(sql);
                     tracing::debug!(
-                        "Migration {}/{} already applied, skipping",
+                        "Migration {}/{} already applied, skipping (checksum: {})",
                         source.plugin_name(),
-                        name
+                        name,
+                        current_checksum
                     );
                     continue;
                 }
 
-                tracing::info!("Applying migration: {}/{}", source.plugin_name(), name);
+                let checksum = compute_checksum(sql);
+                tracing::info!(
+                    "Applying migration: {}/{} (checksum: {})",
+                    source.plugin_name(),
+                    name,
+                    checksum
+                );
                 conn.execute_batch(sql)?;
                 conn.execute(
                     "INSERT INTO desk_migrations (plugin, name) VALUES (?1, ?2)",
@@ -80,7 +99,7 @@ impl MigrationAggregator {
 
     /// 查看已应用的所有 migration
     pub fn list_applied(&self, conn: &Connection) -> Result<Vec<(String, String, String)>, AppError> {
-        let mut stmt = conn.prepare(
+        let mut stmt = conn.prepare_cached(
             "SELECT plugin, name, applied_at FROM desk_migrations ORDER BY id",
         )?;
         let rows = stmt

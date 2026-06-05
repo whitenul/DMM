@@ -4,4 +4,8 @@ permissions = [
     "allow-load-settings",
     "allow-update-settings",
     "allow-save-window-position",
+    "allow-get-system-accent-color",
+    "allow-list-custom-themes",
+    "allow-save-custom-theme",
+    "allow-delete-custom-theme",
 ]

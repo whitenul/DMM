@@ -1,3 +1,24 @@
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum ErrorCode {
+    Database,
+    Io,
+    Icon,
+    Network,
+    Config,
+    Scan,
+    NotFound,
+    Validation,
+    Busy,
+    Timeout,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct ErrorResponse {
+    pub code: ErrorCode,
+    pub message: String,
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
     #[error("数据库错误: {0}")]
@@ -23,21 +44,34 @@ impl serde::Serialize for AppError {
     where
         S: serde::Serializer,
     {
+        let response = ErrorResponse::from(self);
         use serde::ser::SerializeStruct;
-        let code = match self {
-            AppError::Database(_) => "DATABASE",
-            AppError::Io(_) => "IO",
-            AppError::Icon(_) => "ICON",
-            AppError::Network(_) => "NETWORK",
-            AppError::Config(_) => "CONFIG",
-            AppError::Scan(_) => "SCAN",
-            AppError::NotFound(_) => "NOT_FOUND",
-            AppError::Validation(_) => "VALIDATION",
-        };
         let mut s = serializer.serialize_struct("AppError", 2)?;
-        s.serialize_field("code", code)?;
-        s.serialize_field("message", &self.to_string())?;
+        s.serialize_field("code", &response.code)?;
+        s.serialize_field("message", &response.message)?;
         s.end()
+    }
+}
+
+impl From<&AppError> for ErrorResponse {
+    fn from(e: &AppError) -> Self {
+        let (code, message) = match e {
+            AppError::Database(msg) => {
+                if msg.contains("database is locked") || msg.contains("SQLITE_BUSY") {
+                    (ErrorCode::Busy, "数据库繁忙，请稍后重试".to_string())
+                } else {
+                    (ErrorCode::Database, msg.clone())
+                }
+            }
+            AppError::Io(err) => (ErrorCode::Io, err.to_string()),
+            AppError::Icon(msg) => (ErrorCode::Icon, msg.clone()),
+            AppError::Network(msg) => (ErrorCode::Network, msg.clone()),
+            AppError::Config(msg) => (ErrorCode::Config, msg.clone()),
+            AppError::Scan(msg) => (ErrorCode::Scan, msg.clone()),
+            AppError::NotFound(msg) => (ErrorCode::NotFound, msg.clone()),
+            AppError::Validation(msg) => (ErrorCode::Validation, msg.clone()),
+        };
+        ErrorResponse { code, message }
     }
 }
 

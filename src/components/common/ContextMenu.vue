@@ -9,14 +9,16 @@
       <div
         class="context-menu"
         :style="menuStyle"
+        role="menu"
         @click.stop
       >
         <template v-for="(item, index) in items" :key="index">
-          <div v-if="item.divider" class="context-menu-divider" />
+          <div v-if="item.divider" class="context-menu-divider" role="separator" />
           <button
             v-else
             class="context-menu-item"
             :class="{ disabled: item.disabled }"
+            role="menuitem"
             @click="onItemClick(item)"
           >
             <AppIcon v-if="item.icon" :name="item.icon" :size="14" class="menu-item-icon" />

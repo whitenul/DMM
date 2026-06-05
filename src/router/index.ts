@@ -10,8 +10,14 @@ const router = createRouter({
     },
     {
       path: "/settings",
-      name: "settings",
       component: () => import("@/pages/settings/SettingsView.vue"),
+      children: [
+        { path: "", redirect: "/settings/appearance" },
+        { path: "appearance", component: () => import("@/pages/settings/sections/AppearanceSection.vue") },
+        { path: "shortcut", component: () => import("@/pages/settings/sections/ShortcutSection.vue") },
+        { path: "scan", component: () => import("@/pages/settings/sections/ScanSection.vue") },
+        { path: "about", component: () => import("@/pages/settings/sections/AboutSection.vue") },
+      ],
     },
   ],
 });

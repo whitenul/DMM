@@ -12,3 +12,4 @@ desk-core = { workspace = true }
 tauri = { workspace = true }
 serde = { workspace = true }
 rusqlite = { workspace = true }
+fuzzy-matcher = { workspace = true }

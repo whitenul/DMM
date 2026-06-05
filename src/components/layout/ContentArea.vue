@@ -5,13 +5,7 @@
       <p class="empty-text">请选择一个分类</p>
     </div>
 
-    <div v-else-if="!itemStore.items.length && !itemStore.loading" class="empty-state">
-      <AppIcon name="folder-open" :size="48" class="empty-icon" />
-      <p class="empty-text">当前分类下没有应用</p>
-      <p class="empty-hint">点击下方按钮添加应用</p>
-    </div>
-
-    <template v-else>
+    <template v-else-if="itemStore.items.length">
       <div v-if="selectMode" class="select-toolbar">
         <span class="select-count">已选 {{ selectedIds.size }} 项</span>
         <button class="toolbar-btn" @click="selectAll">全选</button>
@@ -401,7 +395,7 @@ onBeforeUnmount(() => {
   padding-bottom: 80px;
   overflow-y: auto;
   position: relative;
-  background: var(--color-bg-card);
+  background: transparent;
 }
 
 .empty-state {

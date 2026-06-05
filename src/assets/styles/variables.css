@@ -1,37 +1,145 @@
 @import "./tokens.css";
 
 :root {
-  --color-bg-solid: var(--dm-gray-20);
-  --color-bg-card: #ffffff;
-  --color-bg-hover: rgba(0, 0, 0, 0.04);
-  --color-bg-active: rgba(0, 0, 0, 0.06);
-  --color-bg-subtle: var(--dm-gray-10);
-  --color-bg-inset: var(--dm-gray-30);
-  --color-text-primary: rgba(0, 0, 0, 0.9);
-  --color-text-secondary: rgba(0, 0, 0, 0.6);
-  --color-text-tertiary: rgba(0, 0, 0, 0.4);
-  --color-text-disabled: rgba(0, 0, 0, 0.25);
-  --color-text-on-accent: #ffffff;
-  --color-text-on-danger: #ffffff;
-  --color-accent: var(--dm-blue-30);
-  --color-accent-hover: var(--dm-blue-20);
-  --color-accent-pressed: var(--dm-blue-10);
-  --color-accent-subtle: var(--dm-blue-100);
-  --color-accent-text: var(--dm-blue-30);
-  --color-danger: var(--dm-red-50);
-  --color-danger-hover: var(--dm-red-40);
-  --color-danger-pressed: var(--dm-red-30);
-  --color-danger-subtle: var(--dm-red-80);
-  --color-warning: var(--dm-yellow-50);
-  --color-warning-subtle: var(--dm-yellow-80);
-  --color-success: var(--dm-green-50);
-  --color-success-subtle: var(--dm-green-80);
-  --color-overlay: rgba(0, 0, 0, 0.3);
-  --color-close-hover: var(--dm-red-40);
-  --color-border: rgba(0, 0, 0, 0.06);
-  --color-border-strong: rgba(0, 0, 0, 0.12);
-  --color-border-accent: var(--dm-blue-30);
-  --color-divider: rgba(0, 0, 0, 0.06);
+  /* ============================================================
+   * Layer 2: 主题定义层 --theme-*（运行时注入，此处提供 fallback）
+   * fallback 值为 default 主题浅色配色，确保 JS 未加载时不白屏
+   * ============================================================ */
+  --theme-accent: #0078d4;
+  --theme-accent-hover: #003d7a;
+  --theme-accent-pressed: #002a4e;
+  --theme-accent-subtle: #e6f2ff;
+  --theme-accent-text: #005fb8;
+  --theme-bg-solid: #f3f3f3;
+  --theme-bg-card: #ffffff;
+  --theme-bg-hover: rgba(0, 0, 0, 0.04);
+  --theme-bg-active: rgba(0, 0, 0, 0.06);
+  --theme-bg-subtle: #fafafa;
+  --theme-bg-inset: #ebebeb;
+  --theme-text-primary: rgba(0, 0, 0, 0.9);
+  --theme-text-secondary: rgba(0, 0, 0, 0.6);
+  --theme-text-tertiary: rgba(0, 0, 0, 0.4);
+  --theme-text-disabled: rgba(0, 0, 0, 0.25);
+  --theme-text-on-accent: #ffffff;
+  --theme-text-on-danger: #ffffff;
+  --theme-danger: #e81123;
+  --theme-danger-hover: #c42b1c;
+  --theme-danger-pressed: #9b0000;
+  --theme-danger-subtle: #ffcccc;
+  --theme-warning: #ffb900;
+  --theme-warning-subtle: #fff3bf;
+  --theme-success: #00cc6a;
+  --theme-success-subtle: #ccf7e0;
+  --theme-overlay: rgba(0, 0, 0, 0.3);
+  --theme-close-hover: #c42b1c;
+  --theme-border: rgba(0, 0, 0, 0.06);
+  --theme-border-strong: rgba(0, 0, 0, 0.12);
+  --theme-border-accent: #005fb8;
+  --theme-divider: rgba(0, 0, 0, 0.06);
+
+  /* ============================================================
+   * Layer 3: 语义变量 --color-*（引用 Layer 2）
+   * ============================================================ */
+  --color-accent: var(--theme-accent);
+  --color-accent-hover: var(--theme-accent-hover);
+  --color-accent-pressed: var(--theme-accent-pressed);
+  --color-accent-subtle: var(--theme-accent-subtle);
+  --color-accent-text: var(--theme-accent-text);
+  --color-bg-solid: var(--theme-bg-solid);
+  --color-bg-card: var(--theme-bg-card);
+  --color-bg-hover: var(--theme-bg-hover);
+  --color-bg-active: var(--theme-bg-active);
+  --color-bg-subtle: var(--theme-bg-subtle);
+  --color-bg-inset: var(--theme-bg-inset);
+  --color-text-primary: var(--theme-text-primary);
+  --color-text-secondary: var(--theme-text-secondary);
+  --color-text-tertiary: var(--theme-text-tertiary);
+  --color-text-disabled: var(--theme-text-disabled);
+  --color-text-on-accent: var(--theme-text-on-accent);
+  --color-text-on-danger: var(--theme-text-on-danger);
+  --color-danger: var(--theme-danger);
+  --color-danger-hover: var(--theme-danger-hover);
+  --color-danger-pressed: var(--theme-danger-pressed);
+  --color-danger-subtle: var(--theme-danger-subtle);
+  --color-warning: var(--theme-warning);
+  --color-warning-subtle: var(--theme-warning-subtle);
+  --color-success: var(--theme-success);
+  --color-success-subtle: var(--theme-success-subtle);
+  --color-overlay: var(--theme-overlay);
+  --color-close-hover: var(--theme-close-hover);
+  --color-border: var(--theme-border);
+  --color-border-strong: var(--theme-border-strong);
+  --color-border-accent: var(--theme-border-accent);
+  --color-divider: var(--theme-divider);
+
+  /* ============================================================
+   * 组件 Token 层 — 从语义色派生，解耦组件与语义色
+   * ============================================================ */
+  /* 按钮 */
+  --btn-primary-bg: var(--color-accent);
+  --btn-primary-text: var(--color-text-on-accent);
+  --btn-primary-hover-bg: var(--color-accent-hover);
+  --btn-primary-pressed-bg: var(--color-accent-pressed);
+  --btn-secondary-bg: var(--color-bg-subtle);
+  --btn-secondary-text: var(--color-text-primary);
+  --btn-secondary-hover-bg: var(--color-bg-hover);
+  --btn-secondary-border: var(--color-border-strong);
+  --btn-danger-bg: var(--color-danger);
+  --btn-danger-text: var(--color-text-on-danger);
+  --btn-danger-hover-bg: var(--color-danger-hover);
+
+  /* 卡片 */
+  --card-bg: var(--color-bg-card);
+  --card-border: var(--color-border);
+  --card-hover-bg: var(--color-bg-hover);
+  --card-active-bg: var(--color-bg-active);
+  --card-shadow: var(--shadow-card);
+
+  /* 输入框 */
+  --input-bg: var(--color-bg-card);
+  --input-border: var(--color-border);
+  --input-focus-border: var(--color-accent);
+  --input-text: var(--color-text-primary);
+  --input-placeholder: var(--color-text-tertiary);
+
+  /* 侧边栏 — 透明，让 app-bg-layer + backdrop-filter 提供背景 */
+  --sidebar-bg: transparent;
+  --sidebar-item-hover: var(--color-bg-hover);
+  --sidebar-item-active: var(--color-bg-active);
+  --sidebar-item-active-text: var(--color-accent);
+
+  /* 标题栏 — 透明，让背景图透出 */
+  --titlebar-bg: transparent;
+  --titlebar-text: var(--color-text-secondary);
+
+  /* 对话框 */
+  --dialog-bg: var(--color-bg-card);
+  --dialog-overlay: var(--color-overlay);
+  --dialog-shadow: var(--shadow-dialog);
+
+  /* 标签/徽章 */
+  --badge-accent-bg: var(--color-accent-subtle);
+  --badge-accent-text: var(--color-accent-text);
+  --badge-danger-bg: var(--color-danger-subtle);
+  --badge-danger-text: var(--color-danger);
+  --badge-success-bg: var(--color-success-subtle);
+  --badge-success-text: var(--color-success);
+
+  /* ============================================================
+   * 效果 Token — 独立于颜色，控制视觉效果
+   * ============================================================ */
+  --effect-glass-blur: 12px;
+  --effect-bg-opacity: 1;
+  --effect-bg-blur: 0px;
+  --app-opacity: 0;
+  --effect-card-opacity: 1;
+  --effect-transition-speed: 1;
+  --effect-hover-transition: calc(150ms * var(--effect-transition-speed));
+  --effect-focus-transition: calc(200ms * var(--effect-transition-speed));
+
+  /* ============================================================
+   * 非颜色变量：保留原有引用
+   * ============================================================ */
   --radius-sm: var(--dm-radius-sm);
   --radius-md: var(--dm-radius-md);
   --radius-lg: var(--dm-radius-lg);
@@ -57,43 +165,86 @@
   --font-size-xl: var(--dm-font-size-xl);
 }
 
+/* 非颜色变量：仍通过 data-theme 区分 */
 [data-theme="dark"] {
-  --color-bg-solid: var(--dm-gray-110);
-  --color-bg-card: var(--dm-gray-100);
-  --color-bg-hover: rgba(255, 255, 255, 0.06);
-  --color-bg-active: rgba(255, 255, 255, 0.08);
-  --color-bg-subtle: var(--dm-gray-120);
-  --color-bg-inset: var(--dm-gray-130);
-  --color-text-primary: rgba(255, 255, 255, 0.9);
-  --color-text-secondary: rgba(255, 255, 255, 0.6);
-  --color-text-tertiary: rgba(255, 255, 255, 0.4);
-  --color-text-disabled: rgba(255, 255, 255, 0.25);
-  --color-text-on-accent: #ffffff;
-  --color-text-on-danger: #ffffff;
-  --color-accent: var(--dm-blue-70);
-  --color-accent-hover: var(--dm-blue-60);
-  --color-accent-pressed: var(--dm-blue-50);
-  --color-accent-subtle: rgba(96, 205, 255, 0.08);
-  --color-accent-text: var(--dm-blue-70);
-  --color-danger: var(--dm-red-60);
-  --color-danger-hover: var(--dm-red-50);
-  --color-danger-pressed: var(--dm-red-40);
-  --color-danger-subtle: rgba(255, 107, 107, 0.12);
-  --color-warning: var(--dm-yellow-50);
-  --color-warning-subtle: rgba(255, 185, 0, 0.12);
-  --color-success: var(--dm-green-50);
-  --color-success-subtle: rgba(0, 204, 106, 0.12);
-  --color-overlay: rgba(0, 0, 0, 0.5);
-  --color-close-hover: var(--dm-red-40);
-  --color-border: rgba(255, 255, 255, 0.06);
-  --color-border-strong: rgba(255, 255, 255, 0.12);
-  --color-border-accent: var(--dm-blue-70);
-  --color-divider: rgba(255, 255, 255, 0.06);
   --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.2);
   --shadow-dialog: 0 8px 32px rgba(0, 0, 0, 0.4);
   --shadow-icon: 0 2px 6px rgba(0, 0, 0, 0.3);
   --shadow-tooltip: 0 4px 12px rgba(0, 0, 0, 0.3);
   --shadow-fab: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================================
+ * 窗口效果：Mica/Acrylic 时背景半透明
+ * ============================================================ */
+[data-window-effect="mica"],
+[data-window-effect="acrylic"] {
+  --effect-bg-opacity: 0.85;
+  --effect-card-opacity: 0.92;
+}
+
+[data-window-effect="acrylic"] {
+  --effect-glass-blur: 20px;
+}
+
+/* ============================================================
+ * 背景层系统 — 三层架构
+ * bg-layer(z:0) → bg-overlay(z:1) → glass-layer(z:2)
+ * 图片就是应用背景，透明度只作用于 bg-layer
+ * ============================================================ */
+.bg-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: var(--color-bg-solid);
+  transition: background-image 0.3s ease, filter 0.3s ease, opacity 0.3s ease;
+  /* 应用透明度：0=不透明(正常), 1=完全透明(透出桌面) */
+  opacity: calc(1 - var(--app-opacity, 0));
+  /* 模糊时扩大边缘避免白边（仅 blur > 0 时由 JS 动态添加） */
+}
+
+.bg-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  background: var(--color-bg-solid);
+  /* 有图时显示遮罩，且随应用透明度一起淡出 */
+  /* 无图时不显示（被 bg-layer 的纯色替代） */
+  opacity: calc(var(--has-bg-image, 0) * var(--effect-bg-opacity, 1) * (1 - var(--app-opacity, 0)));
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+/* 毛玻璃效果层 — 背景层和 UI 层分离 */
+/* glass-bg: 只负责背景和模糊，受 app-opacity 控制 */
+/* glass-layer: 只放 UI，永远 opaque */
+.glass-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  backdrop-filter: blur(var(--effect-glass-blur, 12px));
+  -webkit-backdrop-filter: blur(var(--effect-glass-blur, 12px));
+  background: var(--color-bg-solid);
+  opacity: calc(1 - var(--app-opacity, 0));
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+/* 高透明度时彻底关闭 backdrop-filter */
+[style*="--app-opacity: 1"] .glass-bg,
+[style*="--app-opacity: 0.8"] .glass-bg,
+[style*="--app-opacity: 0.9"] .glass-bg {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.glass-layer {
+  position: relative;
+  z-index: 3;
+  /* UI 层永远 opaque，不受透明度影响 */
 }
 
 * {
@@ -102,10 +253,16 @@
   box-sizing: border-box;
 }
 
+/* 确保 html 也不阻挡透明窗口 */
+html {
+  background: transparent;
+}
+
 body {
   font-family: var(--font-family);
   font-feature-settings: "ss01", "ss02", "cv01", "tnum";
-  background: var(--color-bg-solid);
+  /* transparent 窗口模式下 body 必须透明，否则无法透出桌面 */
+  background: transparent;
   color: var(--color-text-primary);
   user-select: none;
   overflow: hidden;
@@ -116,6 +273,41 @@ body {
 
 code, kbd, pre {
   font-family: var(--font-family-mono);
+}
+
+/* ============================================================
+ * Fluent Design 滚动条
+ * ============================================================ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong, rgba(255,255,255,0.18)) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong, rgba(255,255,255,0.18));
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background 0.15s ease;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-tertiary, rgba(255,255,255,0.32));
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 .numeric, [data-numeric] {

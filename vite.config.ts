@@ -25,4 +25,17 @@ export default defineConfig({
       ignored: ["**/src-tauri/**"],
     },
   },
+  build: {
+    target: 'esnext',
+    cssMinify: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-vue': ['vue', 'vue-router', 'pinia'],
+          'vendor-tauri': ['@tauri-apps/api/core', '@tauri-apps/api/event'],
+          'vendor-utils': ['@vueuse/core', 'sortablejs'],
+        },
+      },
+    },
+  },
 });

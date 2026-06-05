@@ -1,5 +1,5 @@
 <template>
-  <aside class="sidebar" :class="{ collapsed: uiStore.sidebarCollapsed }">
+  <aside class="sidebar" :class="{ collapsed: uiStore.sidebarCollapsed }" role="navigation" aria-label="分类导航">
     <div class="sidebar-header">
       <span v-if="!uiStore.sidebarCollapsed" class="sidebar-label">分类</span>
       <button class="icon-btn" @click="uiStore.toggleSidebar" title="折叠侧边栏">
@@ -227,15 +227,20 @@ onBeforeUnmount(() => {
   flex-direction: column;
   width: 200px;
   min-width: 200px;
-  background: var(--color-bg-solid);
+  background: var(--sidebar-bg);
   border-right: 1px solid var(--color-bg-hover);
   transition: width var(--transition-normal), min-width var(--transition-normal);
   overflow: hidden;
+  position: relative;
+  z-index: 2;
 }
 
 .sidebar.collapsed {
   width: 52px;
   min-width: 52px;
+  /* 折叠时不绘制背景，让背景图片/底色透过来 */
+  background: transparent;
+  border-right-color: transparent;
 }
 
 .sidebar-header {
@@ -244,6 +249,17 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   padding: 8px 12px;
   height: 40px;
+  flex-shrink: 0;
+}
+
+.sidebar.collapsed .sidebar-header {
+  justify-content: center;
+  padding: 8px 0;
+}
+
+/* 折叠时 header 内的 chevron 按钮需要居中且无外边距 */
+.sidebar.collapsed .sidebar-header .icon-btn {
+  margin: 0;
 }
 
 .sidebar-label {
@@ -254,6 +270,7 @@ onBeforeUnmount(() => {
   letter-spacing: 0.5px;
 }
 
+/* 折叠时 header 内的展开按钮（chevron-right）作为唯一的展开入口 */
 .icon-btn {
   display: flex;
   align-items: center;
@@ -267,6 +284,15 @@ onBeforeUnmount(() => {
   font-size: var(--font-size-sm);
   cursor: pointer;
   transition: all var(--transition-fast);
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.sidebar.collapsed .icon-btn {
+  justify-content: center;
+  margin: 4px;
+  padding: 6px;
 }
 
 .icon-btn:hover {
@@ -274,10 +300,22 @@ onBeforeUnmount(() => {
   color: var(--color-accent);
 }
 
+/* 折叠态：给底部操作按钮（添加分类/搜索/设置）一个上方的提示性图标按钮，作为展开快捷方式 */
 .category-list {
   flex: 1;
   overflow-y: auto;
   padding: 4px 8px;
+  min-height: 0;
+}
+
+.sidebar.collapsed .category-list {
+  padding: 4px;
+}
+
+/* 折叠时分类项居中 */
+.sidebar.collapsed .category-item {
+  justify-content: center;
+  padding: 6px;
 }
 
 .add-category-btn {
@@ -293,6 +331,14 @@ onBeforeUnmount(() => {
   font-size: var(--font-size-sm);
   cursor: pointer;
   transition: all var(--transition-fast);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.sidebar.collapsed .add-category-btn {
+  justify-content: center;
+  margin: 8px 4px;
+  padding: 6px;
 }
 
 .add-category-btn:hover {
@@ -315,6 +361,14 @@ onBeforeUnmount(() => {
   cursor: pointer;
   transition: all var(--transition-fast);
   text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.sidebar.collapsed .settings-btn {
+  justify-content: center;
+  margin: 4px 4px 8px;
+  padding: 6px;
 }
 
 .settings-btn:hover,

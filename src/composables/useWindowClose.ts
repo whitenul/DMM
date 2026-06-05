@@ -7,7 +7,7 @@ import { useToastStore } from "@/stores/toast";
 import type { CloseBehavior } from "@/components/common/CloseConfirmDialog.vue";
 
 /**
- * 窗口关闭统一处理 composable
+ * 窗口关闭统一处理 composable（全局单例模式）
  *
  * 职责：
  * 1. 监听 Rust 端 emit 的 "window-close-requested" 事件
@@ -16,16 +16,18 @@ import type { CloseBehavior } from "@/components/common/CloseConfirmDialog.vue";
  *    - "minimize_to_tray" → 直接 hide
  *    - "quit" → 调 quit_app 命令
  * 3. 提供程序化触发关闭的 API（用于 TitleBar 上的 X 按钮等）
+ *
+ * ⚠️ 关键：confirmVisible 是模块级单例 ref，
+ * 所有 useWindowClose() 调用共享同一个 ref，
+ * 确保 TitleBar 设置 visible=true 后 App.vue 的 CloseConfirmDialog 也能看到。
  */
 
+// ── 模块级单例状态 ──
+const confirmVisible = ref(false);
 let unlisten: UnlistenFn | null = null;
+let listening = false;
 
 export function useWindowClose() {
-  const settingsStore = useSettingsStore();
-  const toast = useToastStore();
-
-  const confirmVisible = ref(false);
-
   async function savePosition() {
     try {
       const win = getCurrentWindow();
@@ -49,7 +51,7 @@ export function useWindowClose() {
         await invoke("quit_app");
       } catch (e) {
         console.error("quit_app failed", e);
-        toast.error("退出应用失败");
+        useToastStore().error("退出应用失败");
       }
     } else {
       await savePosition();
@@ -57,7 +59,7 @@ export function useWindowClose() {
         await getCurrentWindow().hide();
       } catch (e) {
         console.error("hide failed", e);
-        toast.error("最小化到托盘失败");
+        useToastStore().error("最小化到托盘失败");
       }
     }
   }
@@ -71,6 +73,7 @@ export function useWindowClose() {
   }
 
   async function requestClose() {
+    const settingsStore = useSettingsStore();
     const behavior = settingsStore.config?.close_behavior ?? "ask";
     await applyBehavior(behavior);
   }
@@ -81,6 +84,7 @@ export function useWindowClose() {
   }) {
     confirmVisible.value = false;
     if (data.remember) {
+      const settingsStore = useSettingsStore();
       await settingsStore.patchCloseBehavior(data.behavior);
     }
     await performClose(data.behavior);
@@ -91,11 +95,11 @@ export function useWindowClose() {
   }
 
   /**
-   * 立即注册全局关闭事件监听。
-   * 必须在 setup() 同步阶段调用（不能放在 onMounted 内部）。
+   * 注册全局关闭事件监听（幂等，重复调用安全）
    */
   async function startListening() {
-    if (unlisten) return; // 已注册，跳过
+    if (listening) return;
+    listening = true;
     unlisten = await listen("window-close-requested", async () => {
       await requestClose();
     });
@@ -104,6 +108,7 @@ export function useWindowClose() {
   function stopListening() {
     unlisten?.();
     unlisten = null;
+    listening = false;
   }
 
   return {

@@ -2211,6 +2211,48 @@
       "description": "Permission identifier",
       "oneOf": [
         {
+          "description": "This permission set configures if your\napplication can enable or disable auto\nstarting the application on boot.\n\n#### Granted Permissions\n\nIt allows all to check, enable and\ndisable the automatic start on boot.\n\n\n#### This default permission set includes:\n\n- `allow-enable`\n- `allow-disable`\n- `allow-is-enabled`",
+          "type": "string",
+          "const": "autostart:default",
+          "markdownDescription": "This permission set configures if your\napplication can enable or disable auto\nstarting the application on boot.\n\n#### Granted Permissions\n\nIt allows all to check, enable and\ndisable the automatic start on boot.\n\n\n#### This default permission set includes:\n\n- `allow-enable`\n- `allow-disable`\n- `allow-is-enabled`"
+        },
+        {
+          "description": "Enables the disable command without any pre-configured scope.",
+          "type": "string",
+          "const": "autostart:allow-disable",
+          "markdownDescription": "Enables the disable command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the enable command without any pre-configured scope.",
+          "type": "string",
+          "const": "autostart:allow-enable",
+          "markdownDescription": "Enables the enable command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the is_enabled command without any pre-configured scope.",
+          "type": "string",
+          "const": "autostart:allow-is-enabled",
+          "markdownDescription": "Enables the is_enabled command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the disable command without any pre-configured scope.",
+          "type": "string",
+          "const": "autostart:deny-disable",
+          "markdownDescription": "Denies the disable command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the enable command without any pre-configured scope.",
+          "type": "string",
+          "const": "autostart:deny-enable",
+          "markdownDescription": "Denies the enable command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the is_enabled command without any pre-configured scope.",
+          "type": "string",
+          "const": "autostart:deny-is-enabled",
+          "markdownDescription": "Denies the is_enabled command without any pre-configured scope."
+        },
+        {
           "description": "Default core plugins set.\n#### This default permission set includes:\n\n- `core:path:default`\n- `core:event:default`\n- `core:window:default`\n- `core:webview:default`\n- `core:app:default`\n- `core:image:default`\n- `core:resources:default`\n- `core:menu:default`\n- `core:tray:default`",
           "type": "string",
           "const": "core:default",
@@ -4497,16 +4539,40 @@
           "markdownDescription": "Denies the search_items command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for the settings plugin\n#### This default permission set includes:\n\n- `allow-load-settings`\n- `allow-update-settings`\n- `allow-save-window-position`",
+          "description": "Default permissions for the settings plugin\n#### This default permission set includes:\n\n- `allow-load-settings`\n- `allow-update-settings`\n- `allow-save-window-position`\n- `allow-get-system-accent-color`\n- `allow-list-custom-themes`\n- `allow-save-custom-theme`\n- `allow-delete-custom-theme`",
           "type": "string",
           "const": "desk-settings:default",
-          "markdownDescription": "Default permissions for the settings plugin\n#### This default permission set includes:\n\n- `allow-load-settings`\n- `allow-update-settings`\n- `allow-save-window-position`"
+          "markdownDescription": "Default permissions for the settings plugin\n#### This default permission set includes:\n\n- `allow-load-settings`\n- `allow-update-settings`\n- `allow-save-window-position`\n- `allow-get-system-accent-color`\n- `allow-list-custom-themes`\n- `allow-save-custom-theme`\n- `allow-delete-custom-theme`"
+        },
+        {
+          "description": "Enables the delete_custom_theme command without any pre-configured scope.",
+          "type": "string",
+          "const": "desk-settings:allow-delete-custom-theme",
+          "markdownDescription": "Enables the delete_custom_theme command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the get_system_accent_color command without any pre-configured scope.",
+          "type": "string",
+          "const": "desk-settings:allow-get-system-accent-color",
+          "markdownDescription": "Enables the get_system_accent_color command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the list_custom_themes command without any pre-configured scope.",
+          "type": "string",
+          "const": "desk-settings:allow-list-custom-themes",
+          "markdownDescription": "Enables the list_custom_themes command without any pre-configured scope."
         },
         {
           "description": "Enables the load_settings command without any pre-configured scope.",
           "type": "string",
           "const": "desk-settings:allow-load-settings",
           "markdownDescription": "Enables the load_settings command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the save_custom_theme command without any pre-configured scope.",
+          "type": "string",
+          "const": "desk-settings:allow-save-custom-theme",
+          "markdownDescription": "Enables the save_custom_theme command without any pre-configured scope."
         },
         {
           "description": "Enables the save_window_position command without any pre-configured scope.",
@@ -4521,10 +4587,34 @@
           "markdownDescription": "Enables the update_settings command without any pre-configured scope."
         },
         {
+          "description": "Denies the delete_custom_theme command without any pre-configured scope.",
+          "type": "string",
+          "const": "desk-settings:deny-delete-custom-theme",
+          "markdownDescription": "Denies the delete_custom_theme command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the get_system_accent_color command without any pre-configured scope.",
+          "type": "string",
+          "const": "desk-settings:deny-get-system-accent-color",
+          "markdownDescription": "Denies the get_system_accent_color command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the list_custom_themes command without any pre-configured scope.",
+          "type": "string",
+          "const": "desk-settings:deny-list-custom-themes",
+          "markdownDescription": "Denies the list_custom_themes command without any pre-configured scope."
+        },
+        {
           "description": "Denies the load_settings command without any pre-configured scope.",
           "type": "string",
           "const": "desk-settings:deny-load-settings",
           "markdownDescription": "Denies the load_settings command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the save_custom_theme command without any pre-configured scope.",
+          "type": "string",
+          "const": "desk-settings:deny-save-custom-theme",
+          "markdownDescription": "Denies the save_custom_theme command without any pre-configured scope."
         },
         {
           "description": "Denies the save_window_position command without any pre-configured scope.",
@@ -6375,6 +6465,72 @@
           "markdownDescription": "This enables all file write related commands without any pre-configured accessible paths."
         },
         {
+          "description": "No features are enabled by default, as we believe\nthe shortcuts can be inherently dangerous and it is\napplication specific if specific shortcuts should be\nregistered or unregistered.\n",
+          "type": "string",
+          "const": "global-shortcut:default",
+          "markdownDescription": "No features are enabled by default, as we believe\nthe shortcuts can be inherently dangerous and it is\napplication specific if specific shortcuts should be\nregistered or unregistered.\n"
+        },
+        {
+          "description": "Enables the is_registered command without any pre-configured scope.",
+          "type": "string",
+          "const": "global-shortcut:allow-is-registered",
+          "markdownDescription": "Enables the is_registered command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the register command without any pre-configured scope.",
+          "type": "string",
+          "const": "global-shortcut:allow-register",
+          "markdownDescription": "Enables the register command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the register_all command without any pre-configured scope.",
+          "type": "string",
+          "const": "global-shortcut:allow-register-all",
+          "markdownDescription": "Enables the register_all command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the unregister command without any pre-configured scope.",
+          "type": "string",
+          "const": "global-shortcut:allow-unregister",
+          "markdownDescription": "Enables the unregister command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the unregister_all command without any pre-configured scope.",
+          "type": "string",
+          "const": "global-shortcut:allow-unregister-all",
+          "markdownDescription": "Enables the unregister_all command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the is_registered command without any pre-configured scope.",
+          "type": "string",
+          "const": "global-shortcut:deny-is-registered",
+          "markdownDescription": "Denies the is_registered command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the register command without any pre-configured scope.",
+          "type": "string",
+          "const": "global-shortcut:deny-register",
+          "markdownDescription": "Denies the register command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the register_all command without any pre-configured scope.",
+          "type": "string",
+          "const": "global-shortcut:deny-register-all",
+          "markdownDescription": "Denies the register_all command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the unregister command without any pre-configured scope.",
+          "type": "string",
+          "const": "global-shortcut:deny-unregister",
+          "markdownDescription": "Denies the unregister command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the unregister_all command without any pre-configured scope.",
+          "type": "string",
+          "const": "global-shortcut:deny-unregister-all",
+          "markdownDescription": "Denies the unregister_all command without any pre-configured scope."
+        },
+        {
           "description": "This permission set configures which\nshell functionality is exposed by default.\n\n#### Granted Permissions\n\nIt allows to use the `open` functionality with a reasonable\nscope pre-configured. It will allow opening `http(s)://`,\n`tel:` and `mailto:` links.\n\n#### This default permission set includes:\n\n- `allow-open`",
           "type": "string",
           "const": "shell:default",
@@ -6439,6 +6595,60 @@
           "type": "string",
           "const": "shell:deny-stdin-write",
           "markdownDescription": "Denies the stdin_write command without any pre-configured scope."
+        },
+        {
+          "description": "This permission set configures which kind of\nupdater functions are exposed to the frontend.\n\n#### Granted Permissions\n\nThe full workflow from checking for updates to installing them\nis enabled.\n\n\n#### This default permission set includes:\n\n- `allow-check`\n- `allow-download`\n- `allow-install`\n- `allow-download-and-install`",
+          "type": "string",
+          "const": "updater:default",
+          "markdownDescription": "This permission set configures which kind of\nupdater functions are exposed to the frontend.\n\n#### Granted Permissions\n\nThe full workflow from checking for updates to installing them\nis enabled.\n\n\n#### This default permission set includes:\n\n- `allow-check`\n- `allow-download`\n- `allow-install`\n- `allow-download-and-install`"
+        },
+        {
+          "description": "Enables the check command without any pre-configured scope.",
+          "type": "string",
+          "const": "updater:allow-check",
+          "markdownDescription": "Enables the check command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the download command without any pre-configured scope.",
+          "type": "string",
+          "const": "updater:allow-download",
+          "markdownDescription": "Enables the download command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the download_and_install command without any pre-configured scope.",
+          "type": "string",
+          "const": "updater:allow-download-and-install",
+          "markdownDescription": "Enables the download_and_install command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the install command without any pre-configured scope.",
+          "type": "string",
+          "const": "updater:allow-install",
+          "markdownDescription": "Enables the install command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the check command without any pre-configured scope.",
+          "type": "string",
+          "const": "updater:deny-check",
+          "markdownDescription": "Denies the check command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the download command without any pre-configured scope.",
+          "type": "string",
+          "const": "updater:deny-download",
+          "markdownDescription": "Denies the download command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the download_and_install command without any pre-configured scope.",
+          "type": "string",
+          "const": "updater:deny-download-and-install",
+          "markdownDescription": "Denies the download_and_install command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the install command without any pre-configured scope.",
+          "type": "string",
+          "const": "updater:deny-install",
+          "markdownDescription": "Denies the install command without any pre-configured scope."
         }
       ]
     },

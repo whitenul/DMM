@@ -117,3 +117,13 @@ pub fn resolve_config_path<R: tauri::Runtime>(
     let dir = resolve_app_data_dir(app)?;
     Ok(dir.join("config.toml"))
 }
+
+/// 主题文件目录
+pub fn resolve_themes_dir<R: tauri::Runtime>(
+    app: &tauri::AppHandle<R>,
+) -> Result<PathBuf, AppError> {
+    let dir = resolve_app_data_dir(app)?;
+    let themes = dir.join("themes");
+    std::fs::create_dir_all(&themes)?;
+    Ok(themes)
+}

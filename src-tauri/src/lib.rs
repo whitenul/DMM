@@ -18,7 +18,11 @@ static APP_HANDLE: Mutex<Option<AppHandle>> = Mutex::new(None);
 
 /// 真正强制退出整个进程
 #[tauri::command]
-fn quit_app() {
+fn quit_app(state: tauri::State<'_, desk_core::db::DbState>) {
+    // WAL checkpoint before exit
+    if let Ok(conn) = state.lock() {
+        let _ = conn.execute_batch("PRAGMA wal_checkpoint(TRUNCATE);");
+    }
     std::process::exit(0);
 }
 
@@ -28,6 +32,18 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+        }))
+        // .plugin(tauri_plugin_updater::Builder::new().build()) // TODO: 启用前需配置 pubkey 签名公钥
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            Some(vec![]),
+        ))
         .invoke_handler(tauri::generate_handler![quit_app])
         .on_window_event(|window, event| {
             // 拦截所有路径触发的窗口关闭请求（X 按钮、Alt+F4、任务管理器右键关闭等）。
@@ -41,12 +57,27 @@ pub fn run() {
             }
         })
         .setup(|app| {
-            unsafe {
-                let _ = windows::Win32::System::Com::CoInitializeEx(
-                    None,
-                    windows::Win32::System::Com::COINIT_MULTITHREADED,
-                );
+            // COM RAII guard — CoUninitialize called on drop
+            struct ComGuard;
+            impl ComGuard {
+                fn init() -> Result<Self, String> {
+                    unsafe {
+                        windows::Win32::System::Com::CoInitializeEx(
+                            None,
+                            windows::Win32::System::Com::COINIT_APARTMENTTHREADED,
+                        )
+                        .ok()
+                        .map_err(|e| format!("COM init failed: {e}"))?;
+                    }
+                    Ok(Self)
+                }
             }
+            impl Drop for ComGuard {
+                fn drop(&mut self) {
+                    unsafe { windows::Win32::System::Com::CoUninitialize(); }
+                }
+            }
+            let _com_guard = ComGuard::init().map_err(|e| e.to_string())?;
 
             // 缓存 AppHandle
             *APP_HANDLE.lock().unwrap() = Some(app.handle().clone());
@@ -76,6 +107,10 @@ pub fn run() {
             app.handle().plugin(desk_web::init())?;
 
             if let Some(main_window) = app.get_webview_window("main") {
+                // Windows 透明窗口：必须显式设置 webview 背景色 alpha=0
+                // None 会重置为默认白色！必须传 alpha=0 的颜色
+                let _ = main_window.set_background_color(Some(tauri::window::Color(0, 0, 0, 0)));
+
                 let config_state = app.state::<ConfigState>();
                 if let Ok(config) = config_state.get() {
                     let _ = main_window.set_size(tauri::LogicalSize::new(
@@ -118,6 +153,11 @@ pub fn run() {
                     }
                     "quit" => {
                         // 托盘菜单"退出"是用户明确意图，直接强制退出整个进程
+                        if let Some(db_state) = app.try_state::<desk_core::db::DbState>() {
+                            if let Ok(conn) = db_state.lock() {
+                                let _ = conn.execute_batch("PRAGMA wal_checkpoint(TRUNCATE);");
+                            }
+                        }
                         std::process::exit(0);
                     }
                     _ => {}

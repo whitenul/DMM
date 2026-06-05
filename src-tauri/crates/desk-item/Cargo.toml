@@ -13,5 +13,4 @@ tauri = { workspace = true }
 serde = { workspace = true }
 rusqlite = { workspace = true }
 pinyin = { workspace = true }
-open = { workspace = true }
 tracing = { workspace = true }

@@ -295,6 +295,42 @@
       "type": "string",
       "oneOf": [
         {
+          "description": "Enables the delete_custom_theme command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-delete-custom-theme",
+          "markdownDescription": "Enables the delete_custom_theme command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the delete_custom_theme command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-delete-custom-theme",
+          "markdownDescription": "Denies the delete_custom_theme command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the get_system_accent_color command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-get-system-accent-color",
+          "markdownDescription": "Enables the get_system_accent_color command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the get_system_accent_color command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-get-system-accent-color",
+          "markdownDescription": "Denies the get_system_accent_color command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the list_custom_themes command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-list-custom-themes",
+          "markdownDescription": "Enables the list_custom_themes command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the list_custom_themes command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-list-custom-themes",
+          "markdownDescription": "Denies the list_custom_themes command without any pre-configured scope."
+        },
+        {
           "description": "Enables the load_settings command without any pre-configured scope.",
           "type": "string",
           "const": "allow-load-settings",
@@ -305,6 +341,18 @@
           "type": "string",
           "const": "deny-load-settings",
           "markdownDescription": "Denies the load_settings command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the save_custom_theme command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-save-custom-theme",
+          "markdownDescription": "Enables the save_custom_theme command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the save_custom_theme command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-save-custom-theme",
+          "markdownDescription": "Denies the save_custom_theme command without any pre-configured scope."
         },
         {
           "description": "Enables the save_window_position command without any pre-configured scope.",
@@ -331,10 +379,10 @@
           "markdownDescription": "Denies the update_settings command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for the settings plugin\n#### This default permission set includes:\n\n- `allow-load-settings`\n- `allow-update-settings`\n- `allow-save-window-position`",
+          "description": "Default permissions for the settings plugin\n#### This default permission set includes:\n\n- `allow-load-settings`\n- `allow-update-settings`\n- `allow-save-window-position`\n- `allow-get-system-accent-color`\n- `allow-list-custom-themes`\n- `allow-save-custom-theme`\n- `allow-delete-custom-theme`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Default permissions for the settings plugin\n#### This default permission set includes:\n\n- `allow-load-settings`\n- `allow-update-settings`\n- `allow-save-window-position`"
+          "markdownDescription": "Default permissions for the settings plugin\n#### This default permission set includes:\n\n- `allow-load-settings`\n- `allow-update-settings`\n- `allow-save-window-position`\n- `allow-get-system-accent-color`\n- `allow-list-custom-themes`\n- `allow-save-custom-theme`\n- `allow-delete-custom-theme`"
         }
       ]
     }
