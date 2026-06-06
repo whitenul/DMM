@@ -1,5 +1,6 @@
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
+/// 初始化日志系统，同时输出到控制台和按日滚动的日志文件
 pub fn init(app_data_dir: &std::path::Path) {
     let log_dir = app_data_dir.join("logs");
     if let Err(e) = std::fs::create_dir_all(&log_dir) {

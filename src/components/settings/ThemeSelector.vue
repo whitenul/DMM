@@ -30,7 +30,6 @@
         导出主题
       </button>
     </div>
-    <!-- 隐藏的文件输入，用于导入 -->
     <input
       ref="fileInputRef"
       type="file"
@@ -61,10 +60,7 @@ const emit = defineEmits<{
 const builtinIds = getBuiltinThemeIds();
 const fileInputRef = ref<HTMLInputElement | null>(null);
 
-/**
- * 按 id + mode 组合去重，只保留当前 resolvedTheme 对应 mode 的主题。
- * 这样同一个主题 ID 的 light/dark 变体不会重复显示。
- */
+/** 按 id + mode 去重，避免同一主题的 light/dark 变体重复显示 */
 const themeOptions = computed(() => {
   const seen = new Set<string>();
   const result: { id: string; name: string; accent: string; mode: string }[] = [];
@@ -106,7 +102,7 @@ function onFileSelected(e: Event) {
   };
   reader.readAsText(file);
 
-  // 重置 input 以便同一文件可以再次选择
+  // 重置 input 以允许重复选择同一文件
   input.value = "";
 }
 </script>

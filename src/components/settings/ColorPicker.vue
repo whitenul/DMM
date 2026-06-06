@@ -37,7 +37,7 @@ const emit = defineEmits<{
 
 const nativeInputRef = ref<HTMLInputElement | null>(null);
 
-/** 提取 hex 部分（去掉 alpha）给原生颜色选择器 */
+/** 提取 hex 部分 */
 const hexOnly = computed(() => {
   const v = props.modelValue;
   if (v.startsWith("#") && v.length >= 7) return v.substring(0, 7);

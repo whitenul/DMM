@@ -12,14 +12,9 @@ import { THEME_COLOR_MAP, ThemeDefinitionSchema } from "@/types/theme";
 export type ThemeMode = "light" | "dark" | "system";
 export type ResolvedTheme = "light" | "dark";
 
-// ============================================================
-// Utilities
-// ============================================================
+// --- 工具函数 ---
 
-/**
- * Converts a local file path to a Tauri asset URL.
- * http/https/asset:// URLs are returned as-is.
- */
+/** 将本地文件路径转为 Tauri 资源 URL，http/https/asset:// 原样返回 */
 function toAssetUrl(path: string | null): string | null {
   if (!path) return null;
   if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("asset://")) return path;
@@ -30,7 +25,7 @@ function toAssetUrl(path: string | null): string | null {
   }
 }
 
-/** Resolves a ThemeMode to a concrete ResolvedTheme. */
+/** 将 ThemeMode 解析为具体的亮/暗主题 */
 function resolve(mode: ThemeMode): ResolvedTheme {
   if (mode === "system") {
     if (typeof window === "undefined") return "dark";
@@ -39,10 +34,7 @@ function resolve(mode: ThemeMode): ResolvedTheme {
   return mode;
 }
 
-/**
- * Derives the full color set from a ThemeDefinition.
- * Fills optional fields and resolves alpha colors.
- */
+/** 从 ThemeDefinition 派生完整色集，填充可选字段并解析透明度颜色 */
 function deriveThemeColors(theme: ThemeDefinition): ResolvedThemeColors {
   const mode = theme.mode;
   const c = theme.colors;
@@ -87,14 +79,12 @@ function deriveThemeColors(theme: ThemeDefinition): ResolvedThemeColors {
   };
 }
 
-// ============================================================
-// Pinia Store
-// ============================================================
+// --- Pinia Store ---
 
 export const useThemeStore = defineStore("theme", () => {
   const { call } = useTauriCommand();
 
-  // ---- 响应式状态 ----
+  // --- 响应式状态 ---
   const resolvedTheme = ref<ResolvedTheme>("dark");
   const currentThemeId = ref<string>("default");
   const currentAccentSource = ref<"system" | "theme" | "custom">("system");
@@ -106,21 +96,15 @@ export const useThemeStore = defineStore("theme", () => {
   const bgBlur = ref<number>(0);
   const appOpacity = ref<number>(0);
 
-  // 系统主题监听
   let mediaQuery: MediaQueryList | null = null;
   let mediaQueryListener: ((e: MediaQueryListEvent) => void) | null = null;
 
-  // ---- 计算属性 ----
+  // --- 计算属性 ---
   const isDark = computed(() => resolvedTheme.value === "dark");
 
-  // ============================================================
-  // DOM 操作
-  // ============================================================
+  // --- DOM 操作 ---
 
-  /**
-   * Injects theme colors into the DOM as CSS custom properties.
-   * Also applies custom color overrides and background image.
-   */
+  /** 将主题颜色注入 DOM CSS 变量，同时应用自定义颜色覆盖和背景图 */
   function applyThemeToDom(colors: ResolvedThemeColors, mode: ResolvedTheme) {
     if (typeof document === "undefined") return;
 
@@ -136,7 +120,7 @@ export const useThemeStore = defineStore("theme", () => {
       root.style.setProperty(cssVar, colors[key as keyof ResolvedThemeColors]);
     }
 
-    // Apply custom color overrides (highest priority)
+    // 自定义颜色覆盖（最高优先级）
     for (const [key, value] of Object.entries(customColorOverrides.value)) {
       const cssVar = THEME_COLOR_MAP[key as keyof ResolvedThemeColors];
       if (cssVar) {
@@ -150,7 +134,7 @@ export const useThemeStore = defineStore("theme", () => {
     resolvedTheme.value = mode;
   }
 
-  /** Syncs the data-window-effect attribute on <html> for CSS selectors. */
+  /** 同步 data-window-effect 属性到 <html>，供 CSS 选择器使用 */
   function applyWindowEffectAttribute(effect: string) {
     if (typeof document === "undefined") return;
     const root = document.documentElement;
@@ -161,33 +145,24 @@ export const useThemeStore = defineStore("theme", () => {
     }
   }
 
-  /**
-   * Clears native DWM window effects (Mica/Acrylic).
-   * All visual appearance is handled by CSS for smooth transitions.
-   * Only the CSS data-window-effect attribute is set for CSS selectors.
-   */
+  /** 清除原生 DWM 窗口效果，视觉外观由 CSS 处理以实现平滑过渡 */
   async function applyNativeWindowEffect(_effect: string | null) {
     try {
       const win = getCurrentWindow();
       await win.clearEffects();
-      // After clearEffects() WebView2 may fall back to a default background.
-      // Reset to transparent to maintain window transparency.
+      // clearEffects 后 WebView2 可能回退到默认背景，需重置为透明
       try {
         const { invoke } = await import("@tauri-apps/api/core");
         await invoke("reset_window_background");
       } catch {
-        // Non-critical: background reset is a safety measure
+        // 非关键：背景重置是安全措施
       }
     } catch {
-      // clearEffects may fail on some platforms; ignore silently
+      // clearEffects 在某些平台可能失败，静默忽略
     }
   }
 
-  /**
-   * Sets the background image (converts local paths via convertFileSrc).
-   * Only sets the --has-bg-image CSS custom property and the bg-layer
-   * background-image. Backdrop-filter is handled entirely by CSS.
-   */
+  /** 设置背景图（本地路径经 convertFileSrc 转换），backdrop-filter 由 CSS 控制 */
   function applyBackgroundImage(url: string | null) {
     if (typeof document === "undefined") return;
     const root = document.documentElement;
@@ -196,15 +171,11 @@ export const useThemeStore = defineStore("theme", () => {
       const assetUrl = toAssetUrl(url);
       bgLayer.style.backgroundImage = assetUrl ? `url(${assetUrl})` : "none";
     }
-    // Sync the --has-bg-image CSS custom property
-    // CSS uses this to disable backdrop-filter when a background image is present
+    // CSS 据此判断是否禁用 backdrop-filter
     root.style.setProperty("--has-bg-image", url ? "1" : "0");
   }
 
-  /**
-   * Applies background-image blur and scales the layer slightly
-   * to prevent edge artifacts.
-   */
+  /** 设置背景图模糊，略微放大图层以防止边缘溢出 */
   function applyBgBlur(blur: number) {
     if (typeof document === "undefined") return;
     const root = document.documentElement;
@@ -213,7 +184,7 @@ export const useThemeStore = defineStore("theme", () => {
     if (bgLayer) {
       if (blur > 0) {
         bgLayer.style.filter = `blur(${blur}px)`;
-        bgLayer.style.transform = "scale(1.05)"; // prevent edge bleed
+        bgLayer.style.transform = "scale(1.05)";
       } else {
         bgLayer.style.filter = "none";
         bgLayer.style.transform = "none";
@@ -221,23 +192,13 @@ export const useThemeStore = defineStore("theme", () => {
     }
   }
 
-  /**
-   * Applies application-wide window opacity.
-   * Purely CSS-driven: only sets the --app-opacity custom property.
-   * The glass-layer background, backdrop-filter blur, and bg-layer opacity
-   * are all handled by CSS calc() formulas for smooth gradual transitions.
-   * DWM effects (Mica/Acrylic) are kept on at all times — they naturally
-   * show the desktop at high transparency and provide material at low transparency.
-   */
+  /** 设置应用窗口透明度，由 CSS 变量驱动 */
   async function applyAppOpacity(opacity: number) {
     if (typeof document === "undefined") return;
     document.documentElement.style.setProperty("--app-opacity", String(opacity));
   }
 
-  /**
-   * Loads a theme by ID and applies it to the DOM.
-   * Falls back to the default theme if the requested one is not found.
-   */
+  /** 按 ID 加载主题并应用到 DOM，未找到时回退到默认主题 */
   function loadAndApplyTheme(themeId: string, mode: ResolvedTheme): boolean {
     const builtin = getBuiltinTheme(themeId, mode);
     if (builtin) {
@@ -261,14 +222,9 @@ export const useThemeStore = defineStore("theme", () => {
     return false;
   }
 
-  // ============================================================
-  // 强调色
-  // ============================================================
+  // --- 强调色 ---
 
-  /**
-   * Overrides the current theme's accent color with a custom hex value.
-   * Derives hover/pressed/subtle variants automatically.
-   */
+  /** 用自定义十六进制值覆盖当前主题强调色，自动派生 hover/pressed/subtle 变体 */
   function applyAccentOverride(hex: string) {
     if (typeof document === "undefined") return;
     const root = document.documentElement;
@@ -281,12 +237,7 @@ export const useThemeStore = defineStore("theme", () => {
     root.style.setProperty("--theme-border-accent", hex);
   }
 
-  /**
-   * Applies the accent color based on the current accentSource:
-   *   - "system": reads the OS accent color via Tauri command
-   *   - "custom": uses the user-picked custom color
-   *   - "theme": uses the built-in theme's accent color
-   */
+  /** 根据 accentSource 应用强调色：system 读系统色、custom 用自定义色、theme 用主题内置色 */
   async function applyAccentSource() {
     if (currentAccentSource.value === "system") {
       try {
@@ -294,7 +245,7 @@ export const useThemeStore = defineStore("theme", () => {
         accentColor.value = sysAccent;
         applyAccentOverride(sysAccent);
       } catch {
-        // Fallback to the current theme's accent color
+        // 回退到当前主题的强调色
         const theme = getBuiltinTheme(currentThemeId.value, resolvedTheme.value)
           ?? availableThemes.value.find(t => t.id === currentThemeId.value && t.mode === resolvedTheme.value);
         if (theme) accentColor.value = theme.colors.accent;
@@ -307,18 +258,15 @@ export const useThemeStore = defineStore("theme", () => {
         applyAccentOverride(custom);
       }
     } else {
-      // accentSource = "theme"
+      // accentSource 为 "theme"
       const theme = getBuiltinTheme(currentThemeId.value, resolvedTheme.value)
         ?? availableThemes.value.find(t => t.id === currentThemeId.value && t.mode === resolvedTheme.value);
       if (theme) accentColor.value = theme.colors.accent;
     }
   }
 
-  // ============================================================
-  // System theme listener
-  // ============================================================
+  // --- 系统主题监听 ---
 
-  /** Starts listening for OS-level dark/light mode changes. */
   function startSystemListener() {
     stopSystemListener();
     if (typeof window === "undefined") return;
@@ -333,7 +281,6 @@ export const useThemeStore = defineStore("theme", () => {
     mediaQuery.addEventListener("change", mediaQueryListener);
   }
 
-  /** Stops the OS theme change listener. */
   function stopSystemListener() {
     if (mediaQuery && mediaQueryListener) {
       mediaQuery.removeEventListener("change", mediaQueryListener);
@@ -342,14 +289,9 @@ export const useThemeStore = defineStore("theme", () => {
     mediaQueryListener = null;
   }
 
-  // ============================================================
-  // 初始化
-  // ============================================================
+  // --- 初始化 ---
 
-  /**
-   * Initializes the theme system. Called once at application startup.
-   * Reads persisted settings and applies theme, background, opacity, etc.
-   */
+  /** 初始化主题系统，读取持久化设置并应用主题、背景、透明度等 */
   async function init() {
     const settingsStore = useSettingsStore();
     const appearance = settingsStore.config?.appearance;
@@ -380,11 +322,8 @@ export const useThemeStore = defineStore("theme", () => {
     startSystemListener();
   }
 
-  // ============================================================
-  // Setter 方法
-  // ============================================================
+  // --- Setter 方法 ---
 
-  /** Switches between light / dark / system mode. */
   async function setMode(mode: ThemeMode) {
     const settingsStore = useSettingsStore();
     const resolved = resolve(mode);
@@ -393,7 +332,6 @@ export const useThemeStore = defineStore("theme", () => {
     await settingsStore.patchAppearance({ theme: mode });
   }
 
-  /** Switches to a different theme by ID. */
   async function setTheme(id: string) {
     const settingsStore = useSettingsStore();
     currentThemeId.value = id;
@@ -403,7 +341,6 @@ export const useThemeStore = defineStore("theme", () => {
     await settingsStore.patchAppearance({ theme_id: id, accent_source: "theme" });
   }
 
-  /** Sets a custom accent color and switches accentSource to "custom". */
   async function setAccentColor(hex: string) {
     const settingsStore = useSettingsStore();
     accentColor.value = hex;
@@ -412,7 +349,6 @@ export const useThemeStore = defineStore("theme", () => {
     await settingsStore.patchAppearance({ accent_source: "custom", custom_accent_color: hex });
   }
 
-  /** Changes the accent color source (system / theme / custom). */
   async function setAccentSource(src: "system" | "theme" | "custom") {
     const settingsStore = useSettingsStore();
     currentAccentSource.value = src;
@@ -422,7 +358,6 @@ export const useThemeStore = defineStore("theme", () => {
     await settingsStore.patchAppearance(patch);
   }
 
-  /** Sets the window effect (CSS attribute + native DWM material). */
   async function setWindowEffect(effect: string) {
     const settingsStore = useSettingsStore();
     currentWindowEffect.value = effect;
@@ -431,7 +366,6 @@ export const useThemeStore = defineStore("theme", () => {
     await settingsStore.patchAppearance({ effect });
   }
 
-  /** Sets or clears the background image. */
   async function setBackgroundImage(url: string | null) {
     const settingsStore = useSettingsStore();
     backgroundImage.value = url;
@@ -439,7 +373,6 @@ export const useThemeStore = defineStore("theme", () => {
     await settingsStore.patchAppearance({ background_image: url });
   }
 
-  /** Sets the background-image blur amount (0-20 px). */
   async function setBgBlur(blur: number) {
     const settingsStore = useSettingsStore();
     bgBlur.value = blur;
@@ -447,10 +380,7 @@ export const useThemeStore = defineStore("theme", () => {
     await settingsStore.patchAppearance({ bg_blur: blur });
   }
 
-  /**
-   * Sets application opacity, clamped to the range 5% - 95%.
-   * Prevents fully invisible or fully opaque states that break UX.
-   */
+  /** 设置应用透明度，限制在 5%-95% 范围内防止不可见或完全不透明 */
   async function setAppOpacity(opacity: number) {
     const settingsStore = useSettingsStore();
     const clamped = Math.max(0.05, Math.min(0.95, opacity));
@@ -459,10 +389,7 @@ export const useThemeStore = defineStore("theme", () => {
     await settingsStore.patchAppearance({ app_opacity: clamped });
   }
 
-  /**
-   * Overrides a single theme color on top of the current preset.
-   * Set value to null to remove the override.
-   */
+  /** 覆盖单个主题颜色，value 为 null 时移除覆盖 */
   async function setCustomColorOverride(key: string, value: string | null) {
     if (value === null) {
       delete customColorOverrides.value[key];
@@ -482,17 +409,13 @@ export const useThemeStore = defineStore("theme", () => {
     }
   }
 
-  /** Removes all custom color overrides and re-applies the current theme. */
   function clearCustomColorOverrides() {
     customColorOverrides.value = {};
     loadAndApplyTheme(currentThemeId.value, resolvedTheme.value);
   }
 
-  // ============================================================
-  // Custom theme management
-  // ============================================================
+  // --- 自定义主题管理 ---
 
-  /** Loads the list of user-defined custom themes from the backend. */
   async function loadCustomThemes() {
     try {
       const customs = await call<ThemeDefinition[]>("list_custom_themes");
@@ -503,10 +426,7 @@ export const useThemeStore = defineStore("theme", () => {
     }
   }
 
-  /**
-   * Imports a theme from JSON with Zod validation.
-   * Built-in theme IDs are prefixed with "imported_" to avoid collisions.
-   */
+  /** 从 JSON 导入主题（Zod 校验），内置主题 ID 加 "imported_" 前缀避免冲突 */
   async function importTheme(json: unknown): Promise<{ success: boolean; error?: string }> {
     const result = ThemeDefinitionSchema.safeParse(json);
     if (!result.success) {
@@ -528,7 +448,6 @@ export const useThemeStore = defineStore("theme", () => {
     }
   }
 
-  /** Exports a theme by ID (built-in or custom). */
   async function exportTheme(id: string): Promise<ThemeDefinition | null> {
     const light = getBuiltinTheme(id, "light");
     const dark = getBuiltinTheme(id, "dark");
@@ -536,7 +455,7 @@ export const useThemeStore = defineStore("theme", () => {
     return availableThemes.value.find(t => t.id === id) ?? null;
   }
 
-  /** Deletes a custom theme. Falls back to "default" if the active theme is deleted. */
+  /** 删除自定义主题，若删除的是当前主题则回退到默认 */
   async function deleteTheme(id: string) {
     const theme = availableThemes.value.find(t => t.id === id);
     if (theme?.isBuiltIn) throw new Error("Cannot delete built-in theme");
@@ -549,12 +468,10 @@ export const useThemeStore = defineStore("theme", () => {
     }
   }
 
-  // ============================================================
-  // Exports
-  // ============================================================
+  // --- 导出 ---
 
   return {
-    // State
+    // 状态
     resolvedTheme,
     isDark,
     currentThemeId,
@@ -567,34 +484,34 @@ export const useThemeStore = defineStore("theme", () => {
     bgBlur,
     appOpacity,
 
-    // Initialization
+    // 初始化
     init,
 
-    // Mode & theme
+    // 模式与主题
     setMode,
     setTheme,
 
-    // Accent color
+    // 强调色
     setAccentColor,
     setAccentSource,
 
-    // Window effects & background
+    // 窗口效果与背景
     setWindowEffect,
     setBackgroundImage,
     setBgBlur,
     setAppOpacity,
 
-    // Custom color overrides
+    // 自定义颜色覆盖
     setCustomColorOverride,
     clearCustomColorOverrides,
 
-    // Custom theme management
+    // 自定义主题管理
     loadCustomThemes,
     importTheme,
     exportTheme,
     deleteTheme,
 
-    // System listener
+    // 系统监听
     startSystemListener,
     stopSystemListener,
   };

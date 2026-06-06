@@ -19,6 +19,7 @@ pub struct ErrorResponse {
     pub message: String,
 }
 
+/// 应用统一错误类型
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
     #[error("数据库错误: {0}")]

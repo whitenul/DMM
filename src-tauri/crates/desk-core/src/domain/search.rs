@@ -9,6 +9,7 @@ pub struct SearchResult {
     pub score: f64,
 }
 
+/// 搜索端口 trait
 pub trait SearchPort: Send + Sync {
     fn search(&self, query: &str) -> Result<Vec<SearchResult>, AppError>;
 }

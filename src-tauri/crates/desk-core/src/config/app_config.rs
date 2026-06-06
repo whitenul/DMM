@@ -112,6 +112,7 @@ impl Default for AppearanceConfig {
     }
 }
 
+/// 扫描配置
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScanConfig {
     #[serde(default = "default_true")]
@@ -153,6 +154,7 @@ impl Default for AppConfig {
     }
 }
 
+/// 配置状态，内部持有互斥的应用配置
 pub struct ConfigState(pub Mutex<AppConfig>);
 
 impl ConfigState {
@@ -174,6 +176,7 @@ impl ConfigState {
             .map_err(|e| AppError::Config(e.to_string()))
     }
 
+    /// 更新内存中的配置
     pub fn update(&self, new_config: &AppConfig) -> Result<(), AppError> {
         let mut config = self.0.lock().map_err(|e| AppError::Config(e.to_string()))?;
         *config = new_config.clone();

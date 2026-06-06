@@ -1,3 +1,5 @@
+//! 数据库模块：连接管理、迁移、仓库实现与路径解析
+
 pub mod connection;
 pub mod migration_aggregator;
 pub mod migrations;

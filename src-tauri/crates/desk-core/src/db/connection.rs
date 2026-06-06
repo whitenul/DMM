@@ -48,12 +48,7 @@ impl DbState {
     }
 }
 
-/// 初始化数据库
-///
-/// 1. 解析应用数据目录（dev/release 自动适配）
-/// 2. 打开或创建 SQLite 文件
-/// 3. 运行所有已注册的 migrations
-/// 4. 将 DbState 注册为 Tauri managed state
+/// 初始化数据库，解析数据目录、打开连接、运行迁移并注册为 Tauri 状态
 pub fn init_db<R: tauri::Runtime>(
     app: &tauri::App<R>,
     aggregator: MigrationAggregator,

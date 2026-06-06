@@ -1,19 +1,17 @@
 import type { ThemeDefinition } from "@/types/theme";
 
-// ============================================================
-// 浅色模式通用配色（非强调色部分，从现有 variables.css :root 提取）
-// ============================================================
+// --- 浅色模式通用配色 ---
 const lightBase = {
   bgSolid: "#f3f3f3",
   bgCard: "#ffffff",
-  bgHover: "#000000",       // → rgba(0,0,0,0.04) 由引擎推导
-  bgActive: "#000000",      // → rgba(0,0,0,0.06)
+  bgHover: "#000000",
+  bgActive: "#000000",
   bgSubtle: "#fafafa",
   bgInset: "#ebebeb",
-  textPrimary: "#000000",   // → rgba(0,0,0,0.9)
-  textSecondary: "#000000", // → rgba(0,0,0,0.6)
-  textTertiary: "#000000",  // → rgba(0,0,0,0.4)
-  textDisabled: "#000000",  // → rgba(0,0,0,0.25)
+  textPrimary: "#000000",
+  textSecondary: "#000000",
+  textTertiary: "#000000",
+  textDisabled: "#000000",
   textOnAccent: "#ffffff",
   textOnDanger: "#ffffff",
   danger: "#e81123",
@@ -24,27 +22,25 @@ const lightBase = {
   warningSubtle: "#fff3bf",
   success: "#00cc6a",
   successSubtle: "#ccf7e0",
-  border: "#000000",        // → rgba(0,0,0,0.06)
-  borderStrong: "#000000",  // → rgba(0,0,0,0.12)
-  divider: "#000000",       // → rgba(0,0,0,0.06)
-  overlay: "#000000",       // → rgba(0,0,0,0.3)
+  border: "#000000",
+  borderStrong: "#000000",
+  divider: "#000000",
+  overlay: "#000000",
   closeHover: "#c42b1c",
 } as const;
 
-// ============================================================
-// 深色模式通用配色（非强调色部分，从现有 variables.css [data-theme="dark"] 提取）
-// ============================================================
+// --- 深色模式通用配色 ---
 const darkBase = {
   bgSolid: "#1f1f1f",
   bgCard: "#2c2c2c",
-  bgHover: "#ffffff",       // → rgba(255,255,255,0.06)
-  bgActive: "#ffffff",      // → rgba(255,255,255,0.08)
+  bgHover: "#ffffff",
+  bgActive: "#ffffff",
   bgSubtle: "#161616",
   bgInset: "#0e0e0e",
-  textPrimary: "#ffffff",   // → rgba(255,255,255,0.9)
-  textSecondary: "#ffffff", // → rgba(255,255,255,0.6)
-  textTertiary: "#ffffff",  // → rgba(255,255,255,0.4)
-  textDisabled: "#ffffff",  // → rgba(255,255,255,0.25)
+  textPrimary: "#ffffff",
+  textSecondary: "#ffffff",
+  textTertiary: "#ffffff",
+  textDisabled: "#ffffff",
   textOnAccent: "#ffffff",
   textOnDanger: "#ffffff",
   danger: "#ff6b6b",
@@ -55,16 +51,14 @@ const darkBase = {
   warningSubtle: "rgba(255, 185, 0, 0.12)",
   success: "#00cc6a",
   successSubtle: "rgba(0, 204, 106, 0.12)",
-  border: "#ffffff",        // → rgba(255,255,255,0.06)
-  borderStrong: "#ffffff",  // → rgba(255,255,255,0.12)
-  divider: "#ffffff",       // → rgba(255,255,255,0.06)
-  overlay: "#000000",       // → rgba(0,0,0,0.5)
+  border: "#ffffff",
+  borderStrong: "#ffffff",
+  divider: "#ffffff",
+  overlay: "#000000",
   closeHover: "#c42b1c",
 } as const;
 
-// ============================================================
-// 各主题强调色定义
-// ============================================================
+// --- 强调色定义 ---
 const accents = {
   default: {
     light: {
@@ -140,9 +134,7 @@ const accents = {
   },
 } as const;
 
-// ============================================================
-// 组装预装主题
-// ============================================================
+// --- 预装主题 ---
 function makeTheme(
   id: string,
   name: string,

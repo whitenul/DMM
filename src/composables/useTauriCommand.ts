@@ -50,14 +50,12 @@ function resolveCommand(command: string): string {
   return PLUGIN_COMMAND_MAP[command] ?? command;
 }
 
-// Icon cache — avoids repeated IPC calls for the same item
 const iconCache = new Map<number, string>();
 
 export function useIconCache() {
   const { call } = useTauriCommand();
 
   async function getIcon(itemId: number): Promise<string | null> {
-    // Check cache first
     if (iconCache.has(itemId)) {
       return iconCache.get(itemId)!;
     }

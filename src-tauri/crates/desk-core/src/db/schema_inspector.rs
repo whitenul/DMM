@@ -41,7 +41,7 @@ impl SchemaInspector {
         Ok(rows)
     }
 
-    /// 列出所有虚拟表（如 FTS5）
+    /// 列出所有虚拟表
     pub fn list_virtual_tables(conn: &Connection) -> Result<Vec<String>, AppError> {
         let mut stmt = conn.prepare(
             "SELECT name FROM sqlite_master WHERE type='table' AND sql LIKE '%VIRTUAL%USING%' ORDER BY name",

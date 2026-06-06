@@ -75,17 +75,14 @@ function positionTooltip() {
   const viewportW = window.innerWidth;
   const viewportH = window.innerHeight;
 
-  // 默认放在 trigger 下方左对齐
   let top = trigger.bottom + margin;
   let left = trigger.left + trigger.width / 2 - tooltip.width / 2;
 
-  // 水平溢出：贴边
   if (left < 8) left = 8;
   if (left + tooltip.width > viewportW - 8) {
     left = viewportW - tooltip.width - 8;
   }
 
-  // 底部溢出：放到 trigger 上方
   if (top + tooltip.height > viewportH - 8) {
     top = trigger.top - tooltip.height - margin;
   }

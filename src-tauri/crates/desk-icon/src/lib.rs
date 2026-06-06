@@ -4,18 +4,14 @@ use desk_core::error::AppError;
 use std::path::PathBuf;
 use tauri::{plugin::TauriPlugin, Manager, Runtime};
 
-// ---------------------------------------------------------------------------
-// IconState — managed Tauri state holding a dyn ItemRepo
-// ---------------------------------------------------------------------------
+// --- 图标状态 ---
 
 pub struct IconState {
     pub repo: Box<dyn ItemRepo>,
     pub app_data_dir: PathBuf,
 }
 
-// ---------------------------------------------------------------------------
-// Icon extraction service (Win32 unsafe code)
-// ---------------------------------------------------------------------------
+// --- 图标提取服务 ---
 
 mod icon_extractor {
     use desk_core::error::AppError;
@@ -237,9 +233,7 @@ mod icon_extractor {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Tauri Commands (in a submodule to avoid __cmd__ macro name collisions)
-// ---------------------------------------------------------------------------
+// --- Tauri 命令 ---
 
 mod commands {
     use super::{icon_extractor, AppError, IconState};
@@ -291,9 +285,7 @@ mod commands {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Plugin init
-// ---------------------------------------------------------------------------
+// --- 插件初始化 ---
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     tauri::plugin::Builder::new("desk-icon")

@@ -238,7 +238,7 @@ onBeforeUnmount(() => {
 .sidebar.collapsed {
   width: 52px;
   min-width: 52px;
-  /* 折叠时不绘制背景，让背景图片/底色透过来 */
+  /* 折叠时透明背景 */
   background: transparent;
   border-right-color: transparent;
 }
@@ -257,7 +257,7 @@ onBeforeUnmount(() => {
   padding: 8px 0;
 }
 
-/* 折叠时 header 内的 chevron 按钮需要居中且无外边距 */
+/* 折叠时按钮无外边距 */
 .sidebar.collapsed .sidebar-header .icon-btn {
   margin: 0;
 }
@@ -270,7 +270,7 @@ onBeforeUnmount(() => {
   letter-spacing: 0.5px;
 }
 
-/* 折叠时 header 内的展开按钮（chevron-right）作为唯一的展开入口 */
+/* 折叠时展开按钮入口 */
 .icon-btn {
   display: flex;
   align-items: center;
@@ -300,7 +300,7 @@ onBeforeUnmount(() => {
   color: var(--color-accent);
 }
 
-/* 折叠态：给底部操作按钮（添加分类/搜索/设置）一个上方的提示性图标按钮，作为展开快捷方式 */
+/* 分类列表 */
 .category-list {
   flex: 1;
   overflow-y: auto;

@@ -5,26 +5,20 @@ use tauri::{plugin::TauriPlugin, Manager, Runtime};
 pub mod migrations;
 pub use migrations::DeskWebMigrations;
 
-// ---------------------------------------------------------------------------
-// WebMetadata — raw metadata extracted from a web page
-// ---------------------------------------------------------------------------
+// --- 网页元数据 ---
 
 pub struct WebMetadata {
     pub title: Option<String>,
     pub favicon_url: Option<String>,
 }
 
-// ---------------------------------------------------------------------------
-// WebState — managed Tauri state holding app_data_dir
-// ---------------------------------------------------------------------------
+// --- Web 状态 ---
 
 pub struct WebState {
     pub app_data_dir: PathBuf,
 }
 
-// ---------------------------------------------------------------------------
-// Web metadata extraction service
-// ---------------------------------------------------------------------------
+// --- 元数据提取服务 ---
 
 pub async fn fetch_web_metadata(url: &str) -> Result<WebMetadata, AppError> {
     let client = reqwest::Client::builder()
@@ -114,9 +108,7 @@ pub async fn download_favicon(
     Ok(())
 }
 
-// ---------------------------------------------------------------------------
-// Tauri Commands (in a submodule to avoid __cmd__ macro name collisions)
-// ---------------------------------------------------------------------------
+// --- Tauri 命令 ---
 
 mod commands {
     use super::{download_favicon, fetch_web_metadata, AppError, WebState};
@@ -161,9 +153,7 @@ mod commands {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Plugin init
-// ---------------------------------------------------------------------------
+// --- 插件初始化 ---
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     tauri::plugin::Builder::new("desk-web")

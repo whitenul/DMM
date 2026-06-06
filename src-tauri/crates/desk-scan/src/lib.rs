@@ -11,21 +11,17 @@ use walkdir::WalkDir;
 pub mod migrations;
 pub use migrations::DeskScanMigrations;
 
-// ===========================================================================
-// ScanState — managed Tauri state holding repos + DbState
-// ===========================================================================
+// --- 扫描状态 ---
 
 pub struct ScanState {
     item_repo: Box<dyn ItemRepo>,
     category_repo: Box<dyn CategoryRepo>,
-    /// Kept for direct DB access when needed (e.g., FolderWatcher).
+    /// 保留用于直接数据库访问
     #[allow(dead_code)]
     db: DbState,
 }
 
-// ===========================================================================
-// LNK parsing helpers
-// ===========================================================================
+// --- LNK 解析 ---
 
 struct LnkInfo {
     target: String,
@@ -48,9 +44,7 @@ fn parse_lnk_info(path: &std::path::Path) -> Option<LnkInfo> {
     })
 }
 
-// ===========================================================================
-// Scan functions
-// ===========================================================================
+// --- 扫描函数 ---
 
 pub fn scan_start_menu() -> Result<Vec<ScannedApp>, AppError> {
     let mut apps = Vec::new();
@@ -106,7 +100,7 @@ pub fn scan_start_menu() -> Result<Vec<ScannedApp>, AppError> {
     Ok(apps)
 }
 
-/// Scan a single file and return a ScannedApp if it's a supported type.
+/// 扫描单个文件，若为支持的类型则返回 ScannedApp
 pub fn scan_single_file(path: &Path) -> Option<ScannedApp> {
     let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
     if !["exe", "lnk", "url", "bat"].contains(&ext) {
@@ -301,8 +295,7 @@ fn find_uwp_executable(install_dir: &str) -> Option<String> {
     }
 }
 
-/// Import scanned apps into a category using ItemRepo trait methods.
-/// Returns the number of newly imported apps.
+/// 将扫描到的应用导入指定分类，返回新导入的应用数量
 pub fn import_scanned_apps(
     item_repo: &dyn ItemRepo,
     category_id: i64,
@@ -310,7 +303,7 @@ pub fn import_scanned_apps(
 ) -> Result<usize, AppError> {
     let mut imported = 0usize;
 
-    // Determine current max sort_order via get_by_category
+    // 通过 get_by_category 确定当前最大 sort_order
     let existing = item_repo.get_by_category(category_id)?;
     let max_order = existing.iter().map(|i| i.sort_order).max().unwrap_or(-1);
 
@@ -340,8 +333,7 @@ pub fn import_scanned_apps(
     Ok(imported)
 }
 
-/// Auto-scan on application start using CategoryRepo + ItemRepo traits.
-/// Returns (number of imported apps, default category id).
+/// 应用启动时自动扫描，返回导入的应用数量和默认分类 ID
 pub fn auto_scan_on_start(
     item_repo: &dyn ItemRepo,
     category_repo: &dyn CategoryRepo,
@@ -351,7 +343,7 @@ pub fn auto_scan_on_start(
         return Ok((0, 0));
     }
 
-    // Find or create the default category
+    // 查找或创建默认分类
     let categories = category_repo.get_all()?;
     let default_cat = categories.iter().find(|c| c.name == "默认");
     let default_cat_id = match default_cat {
@@ -384,9 +376,7 @@ pub fn auto_scan_on_start(
     Ok((total_imported, default_cat_id))
 }
 
-// ===========================================================================
-// FolderWatcher
-// ===========================================================================
+// --- 文件夹监听 ---
 
 use notify::{Config, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use std::sync::mpsc;
@@ -414,7 +404,7 @@ impl FolderWatcher {
         )
         .map_err(|e| AppError::Scan(e.to_string()))?;
 
-        // Query categories with folder_path using SqliteCategoryRepo from desk-core
+        // 使用 SqliteCategoryRepo 查询带有 folder_path 的分类
         let category_repo = SqliteCategoryRepo::new(db.clone());
         let categories: Vec<(i64, String)> = category_repo
             .get_all()?
@@ -461,30 +451,29 @@ impl FolderWatcher {
                         Err(mpsc::RecvTimeoutError::Disconnected) => break,
                     }
 
-                    // Debounce: wait for events to settle before processing
+                    // 防抖：等待事件稳定后再处理
                     if !pending_paths.is_empty() && last_flush.elapsed() >= debounce {
                         let paths_to_process: Vec<PathBuf> = pending_paths.drain().collect();
                         last_flush = std::time::Instant::now();
 
-                        // Incremental update: only process changed files
+                        // 增量更新：仅处理变更的文件
                         let item_repo = SqliteItemRepo::new(db.clone());
                         for path in &paths_to_process {
-                            // Find which category this path belongs to
+                            // 查找路径所属分类
                             for (cat_id, folder) in &categories {
                                 let folder_path = PathBuf::from(folder);
                                 if path.starts_with(&folder_path) {
                                     if path.exists() {
-                                        // File added/modified: scan single file and import
+                                        // 文件新增/修改：扫描并导入
                                         if let Some(app) = scan_single_file(path) {
                                             import_scanned_apps(&item_repo, *cat_id, &[app]).ok();
                                         }
                                     } else {
-                                        // File removed: delete from DB by path
+                                        // 文件删除：按路径从数据库删除
                                         item_repo.exists_by_path_and_category(
                                             &path.to_string_lossy(), *cat_id
                                         ).ok();
-                                        // Note: We'd need a delete_by_path method for true incremental
-                                        // For now, fall back to full rescan of the folder
+                                        // 目前缺少 delete_by_path 方法，回退为全量重扫
                                         let apps = scan_folder(folder).unwrap_or_default();
                                         import_scanned_apps(&item_repo, *cat_id, &apps).ok();
                                     }
@@ -519,7 +508,7 @@ impl Drop for FolderWatcher {
     }
 }
 
-/// Link a folder to a category using CategoryRepo + ItemRepo trait methods.
+/// 将文件夹关联到分类并扫描导入
 pub fn link_folder(
     category_repo: &dyn CategoryRepo,
     item_repo: &dyn ItemRepo,
@@ -532,7 +521,7 @@ pub fn link_folder(
     Ok(())
 }
 
-/// Unlink a folder from a category using CategoryRepo trait method.
+/// 取消文件夹与分类的关联
 pub fn unlink_folder(
     category_repo: &dyn CategoryRepo,
     category_id: i64,
@@ -540,9 +529,7 @@ pub fn unlink_folder(
     category_repo.unlink_folder(category_id)
 }
 
-// ===========================================================================
-// Tauri Commands (in a submodule to avoid __cmd__ macro name collisions)
-// ===========================================================================
+// --- Tauri 命令 ---
 
 mod commands {
     use super::*;
@@ -587,9 +574,7 @@ mod commands {
     }
 }
 
-// ===========================================================================
-// Plugin init
-// ===========================================================================
+// --- 插件初始化 ---
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     tauri::plugin::Builder::<R>::new("desk-scan")

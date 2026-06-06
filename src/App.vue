@@ -46,7 +46,6 @@ const toast = useToastStore();
 const uiStore = useUIStore();
 const themeStore = useThemeStore();
 
-// 解构 composable 返回值，保证模板中 ref 自动解包
 const {
   confirmVisible: closeConfirmVisible,
   onConfirmDialog: onConfirmCloseDialog,
@@ -55,8 +54,7 @@ const {
   stopListening,
 } = useWindowClose();
 
-// ⚠️ 关键：必须在 setup 同步阶段调用，不能放在 onMounted 里
-// 因为 listen() 是异步的，但注册动作本身不需要等 onMounted
+// 必须在 setup 同步阶段调用
 startListening();
 
 let unlistenFolderChanged: (() => void) | null = null;
@@ -82,10 +80,10 @@ onMounted(async () => {
       await categoryStore.fetchCategories();
     }
   } catch {
-    // auto scan failure is non-critical
+    // 自动扫描失败不影响主流程
   }
 
-  // Register global search shortcut
+  // 注册全局搜索快捷键
   try {
     const shortcut = settingsStore.config?.shortcut?.global_search || 'Ctrl+Shift+Space';
     await register(shortcut, (event) => {
@@ -95,7 +93,6 @@ onMounted(async () => {
     });
   } catch (e) {
     console.warn('[App] Failed to register global shortcut:', e);
-    // Fallback: the shortcut may already be registered or not supported
   }
 
   unlistenKeydown = (e: KeyboardEvent) => {
@@ -112,12 +109,12 @@ onMounted(async () => {
 onBeforeUnmount(async () => {
   stopListening();
   unlistenFolderChanged?.();
-  // Unregister global shortcut
+  // 注销全局快捷键
   try {
     const shortcut = settingsStore.config?.shortcut?.global_search || 'Ctrl+Shift+Space';
     await unregister(shortcut);
   } catch {
-    // shortcut may not have been registered
+    // 快捷键可能未注册
   }
   if (unlistenKeydown) {
     window.removeEventListener("keydown", unlistenKeydown);

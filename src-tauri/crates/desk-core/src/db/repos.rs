@@ -49,9 +49,7 @@ pub fn compute_pinyin(name: &str) -> String {
     result
 }
 
-// ===========================================================================
-// SqliteCategoryRepo
-// ===========================================================================
+// --- SqliteCategoryRepo ---
 
 pub struct SqliteCategoryRepo {
     db: DbState,
@@ -236,9 +234,7 @@ impl CategoryRepo for SqliteCategoryRepo {
     }
 }
 
-// ===========================================================================
-// SqliteItemRepo
-// ===========================================================================
+// --- SqliteItemRepo ---
 
 pub struct SqliteItemRepo {
     db: DbState,
@@ -533,10 +529,9 @@ impl ItemRepo for SqliteItemRepo {
     }
 }
 
-// ===========================================================================
-// SqliteSearchRepo
-// ===========================================================================
+// --- SqliteSearchRepo ---
 
+/// 基于 SQLite 的搜索仓库
 pub struct SqliteSearchRepo {
     db: DbState,
 }
@@ -590,7 +585,7 @@ impl SearchPort for SqliteSearchRepo {
 
         let mut results: Vec<SearchResult> = rows.filter_map(|r| r.ok()).collect();
 
-        // 2. Fuzzy fallback when FTS5 returns no results
+        // FTS5 无结果时的模糊匹配回退
         if results.is_empty() {
             let query_lower = query.to_lowercase();
             let mut stmt = conn.prepare_cached(

@@ -4,9 +4,7 @@ use desk_core::error::AppError;
 use serde::Deserialize;
 use tauri::{plugin::TauriPlugin, Manager, Runtime, State};
 
-// ---------------------------------------------------------------------------
-// ReorderEntry — used by the reorder_categories command
-// ---------------------------------------------------------------------------
+// --- 排序条目 ---
 
 #[derive(Deserialize)]
 pub struct ReorderEntry {
@@ -14,15 +12,11 @@ pub struct ReorderEntry {
     pub sort_order: i32,
 }
 
-// ---------------------------------------------------------------------------
-// CategoryState — managed Tauri state holding the repo
-// ---------------------------------------------------------------------------
+// --- 分类状态 ---
 
 pub struct CategoryState(pub Box<dyn CategoryRepo>);
 
-// ---------------------------------------------------------------------------
-// Tauri Commands (in a separate module to avoid __cmd__ macro name conflicts)
-// ---------------------------------------------------------------------------
+// --- Tauri 命令 ---
 
 mod commands {
     use super::*;
@@ -88,9 +82,7 @@ mod commands {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Plugin Init
-// ---------------------------------------------------------------------------
+// --- 插件初始化 ---
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     tauri::plugin::Builder::new("desk-category")

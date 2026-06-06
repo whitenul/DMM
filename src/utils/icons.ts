@@ -40,11 +40,9 @@ export type IconName = string;
 
 export type IconComponent = Component<LucideProps>;
 
-/* ------------------------------------------------------------------ */
-/*  业务图标 Registry                                                  */
-/* ------------------------------------------------------------------ */
+// --- 业务图标 Registry ---
 
-/** 启动项 / Item 类型图标 */
+/** Item 类型图标映射 */
 export const TYPE_ICON_MAP: Record<string, IconComponent> = {
   App: AppWindow,
   File: FileText,
@@ -53,7 +51,7 @@ export const TYPE_ICON_MAP: Record<string, IconComponent> = {
   Default: Package,
 };
 
-/** 分类可选图标（用于 CategoryEditDialog 的图标选择器） */
+/** 分类图标映射 */
 export interface CategoryIconOption {
   value: string;
   component: IconComponent;
@@ -72,7 +70,7 @@ export const CATEGORY_ICON_OPTIONS: CategoryIconOption[] = [
   { value: "Star", component: Star },
 ];
 
-/** 通用 UI 图标（按字符串 key 引用） */
+/** UI 图标映射 */
 export const UI_ICON_MAP: Record<string, IconComponent> = {
   // 操作
   edit: Pencil,
@@ -104,9 +102,7 @@ export const UI_ICON_MAP: Record<string, IconComponent> = {
   package: Package,
 };
 
-/* ------------------------------------------------------------------ */
-/*  兼容旧 API（迁移期保留）                                            */
-/* ------------------------------------------------------------------ */
+// --- 兼容旧 API ---
 
 /**
  * @deprecated 用 `<AppIcon name="App" />` 替代

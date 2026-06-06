@@ -1,3 +1,4 @@
+/// 扫描到的应用程序信息
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ScannedApp {
     pub name: String,

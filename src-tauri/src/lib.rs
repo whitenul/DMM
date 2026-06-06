@@ -13,13 +13,13 @@ use tauri::{
     AppHandle, Emitter, Manager, WindowEvent,
 };
 
-/// 缓存 AppHandle，用于不需要传参的命令内部调用
+/// 全局 AppHandle 缓存
 static APP_HANDLE: Mutex<Option<AppHandle>> = Mutex::new(None);
 
 /// 真正强制退出整个进程
 #[tauri::command]
 fn quit_app(state: tauri::State<'_, desk_core::db::DbState>) {
-    // WAL checkpoint before exit
+    // 退出前执行 WAL checkpoint
     if let Ok(conn) = state.lock() {
         let _ = conn.execute_batch("PRAGMA wal_checkpoint(TRUNCATE);");
     }
@@ -27,7 +27,6 @@ fn quit_app(state: tauri::State<'_, desk_core::db::DbState>) {
 }
 
 /// 重置窗口背景色为完全透明
-/// 在 clearEffects() 后调用，防止 WebView2 回退到默认背景色
 #[tauri::command]
 fn reset_window_background(app: AppHandle) -> Result<(), String> {
     if let Some(window) = app.get_webview_window("main") {
@@ -60,18 +59,14 @@ pub fn run() {
         ))
         .invoke_handler(tauri::generate_handler![quit_app, reset_window_background])
         .on_window_event(|window, event| {
-            // 拦截所有路径触发的窗口关闭请求（X 按钮、Alt+F4、任务管理器右键关闭等）。
-            // 决策权完全交给前端：
-            //   1. 永远 prevent_close 防止窗口被关掉
-            //   2. 向前端 emit "window-close-requested" 事件
-            //   3. 前端根据 settings.close_behavior 决定是弹窗/hide/quit
+            // 拦截窗口关闭请求，交由前端决定行为
             if let WindowEvent::CloseRequested { api, .. } = event {
                 api.prevent_close();
                 let _ = window.app_handle().emit("window-close-requested", ());
             }
         })
         .setup(|app| {
-            // COM RAII guard — CoUninitialize called on drop
+            // COM 生命周期守卫，drop 时自动 CoUninitialize
             struct ComGuard;
             impl ComGuard {
                 fn init() -> Result<Self, String> {
@@ -93,7 +88,6 @@ pub fn run() {
             }
             let _com_guard = ComGuard::init().map_err(|e| e.to_string())?;
 
-            // 缓存 AppHandle
             *APP_HANDLE.lock().unwrap() = Some(app.handle().clone());
 
             let logs_dir = resolve_logs_dir(app.handle()).map_err(|e| e.to_string())?;
@@ -121,8 +115,7 @@ pub fn run() {
             app.handle().plugin(desk_web::init())?;
 
             if let Some(main_window) = app.get_webview_window("main") {
-                // Windows transparent window: must explicitly set webview background alpha=0.
-                // None resets to default white! Must pass alpha=0 color.
+                // 设置 WebView 背景为透明
                 let _ = main_window.set_background_color(Some(tauri::window::Color(0, 0, 0, 0)));
 
                 let config_state = app.state::<ConfigState>();
@@ -137,12 +130,18 @@ pub fn run() {
                     ));
                 }
 
-                // DWM effects (Mica/Acrylic) are no longer applied.
-                // All visual appearance is handled by CSS for smoother transitions.
+                // 不启用 DWM 效果，视觉由 CSS 控制
                 let _ = main_window.set_effects(tauri::utils::config::WindowEffectsConfig {
                     effects: vec![],
                     ..Default::default()
                 });
+
+                // 编译时内嵌图标，确保开发和生产环境都能正确设置任务栏图标
+                let icon = tauri::image::Image::from_bytes(include_bytes!(
+                    "../icons/icon.png"
+                ))
+                .expect("icon.png should be valid");
+                let _ = main_window.set_icon(icon);
             }
 
             let show_item = MenuItemBuilder::with_id("show", "显示主窗口").build(app)?;
@@ -154,6 +153,10 @@ pub fn run() {
                 .build()?;
 
             let _tray = TrayIconBuilder::new()
+                .icon(
+                    tauri::image::Image::from_bytes(include_bytes!("../icons/icon.png"))
+                        .expect("icon.png should be valid"),
+                )
                 .menu(&menu)
                 .on_menu_event(move |app, event| match event.id().as_ref() {
                     "show" => {

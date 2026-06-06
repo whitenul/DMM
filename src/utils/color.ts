@@ -81,7 +81,7 @@ export function contrastRatio(hex1: string, hex2: string): number {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-/** 提亮到最低亮度（用于 dark 模式 accent text） */
+/** 提亮到最低亮度 */
 export function lightenToMinLuminance(hex: string, minLuminance: number): string {
   let hsl = hexToHSL(hex);
   while (relativeLuminance(hslToHex(hsl)) < minLuminance && hsl.l < 100) {
@@ -90,7 +90,7 @@ export function lightenToMinLuminance(hex: string, minLuminance: number): string
   return hslToHex(hsl);
 }
 
-/** 加深到最高亮度（用于 light 模式 accent text） */
+/** 加深到最高亮度 */
 export function darkenToMaxLuminance(hex: string, maxLuminance: number): string {
   let hsl = hexToHSL(hex);
   while (relativeLuminance(hslToHex(hsl)) > maxLuminance && hsl.l > 0) {
@@ -113,7 +113,7 @@ const ALPHA_MAP: Record<string, { light: number; dark: number }> = {
   overlay:       { light: 0.3,  dark: 0.5 },
 };
 
-/** 解析透明色：如果已是 rgba() 则直接返回，否则根据 mode 和变量类型推导 */
+/** 解析透明色 */
 export function resolveAlphaColor(value: string, mode: "light" | "dark", varType: string): string {
   if (value.startsWith("rgba") || value.startsWith("rgb")) return value;
   const alpha = ALPHA_MAP[varType]?.[mode] ?? 1;

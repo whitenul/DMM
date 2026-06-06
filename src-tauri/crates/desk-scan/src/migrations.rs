@@ -2,7 +2,7 @@ use desk_core::db::MigrationSource;
 
 /// desk-scan 的数据库 migration
 ///
-/// 提供 scan_history 表记录扫描历史（用于"上次扫描时间"显示和"是否需要重新扫描"判断）
+/// scan_history 表，记录扫描历史
 pub struct DeskScanMigrations;
 
 impl MigrationSource for DeskScanMigrations {

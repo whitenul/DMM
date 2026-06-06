@@ -12,6 +12,7 @@ pub struct Category {
     pub updated_at: String,
 }
 
+/// 分类仓库 trait
 pub trait CategoryRepo: Send + Sync {
     fn get_all(&self) -> Result<Vec<Category>, AppError>;
     fn get_by_id(&self, id: i64) -> Result<Option<Category>, AppError>;

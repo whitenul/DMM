@@ -3,15 +3,15 @@ import { computed } from "vue";
 import { resolveIcon, type IconComponent } from "@/utils/icons";
 
 interface Props {
-  /** 图标名（业务 key 或 Lucide PascalCase 名） */
+  /** 图标名 */
   name: string;
-  /** 图标尺寸（px） */
+  /** 图标尺寸 */
   size?: number | string;
-  /** 描边宽度（默认 2） */
+  /** 描边宽度 */
   strokeWidth?: number | string;
-  /** 颜色（默认 currentColor 继承文字色） */
+  /** 颜色 */
   color?: string;
-  /** 是否旋转（用于 loading 状态） */
+  /** 是否旋转 */
   spin?: boolean;
   /** 无障碍标签 */
   title?: string;

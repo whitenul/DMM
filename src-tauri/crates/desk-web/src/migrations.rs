@@ -2,7 +2,7 @@ use desk_core::db::MigrationSource;
 
 /// desk-web 的数据库 migration
 ///
-/// 提供 web_metadata 表用于缓存网页元数据
+/// web_metadata 表，缓存网页元数据
 pub struct DeskWebMigrations;
 
 impl MigrationSource for DeskWebMigrations {

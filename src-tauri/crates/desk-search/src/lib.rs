@@ -3,15 +3,11 @@ use desk_core::domain::search::{SearchPort, SearchResult};
 use desk_core::error::AppError;
 use tauri::{plugin::TauriPlugin, Manager, Runtime};
 
-// ---------------------------------------------------------------------------
-// SearchState — managed Tauri state holding a dyn SearchPort
-// ---------------------------------------------------------------------------
+// --- 搜索状态 ---
 
 pub struct SearchState(pub Box<dyn SearchPort>);
 
-// ---------------------------------------------------------------------------
-// Tauri Commands (in a submodule to avoid __cmd__ macro name collisions)
-// ---------------------------------------------------------------------------
+// --- Tauri 命令 ---
 
 mod commands {
     use super::{AppError, SearchResult, SearchState};
@@ -26,9 +22,7 @@ mod commands {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Plugin Init
-// ---------------------------------------------------------------------------
+// --- 插件初始化 ---
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     tauri::plugin::Builder::new("desk-search")

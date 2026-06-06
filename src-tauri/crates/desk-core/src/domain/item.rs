@@ -17,6 +17,7 @@ pub struct Item {
     pub updated_at: String,
 }
 
+/// 快捷方式仓库 trait
 pub trait ItemRepo: Send + Sync {
     fn get_by_category(&self, category_id: i64) -> Result<Vec<Item>, AppError>;
     fn get_by_id(&self, id: i64) -> Result<Option<Item>, AppError>;

@@ -29,15 +29,12 @@ import { useWindowClose } from "@/composables/useWindowClose";
 const windowClose = useWindowClose();
 
 function onTitlebarMouseDown(e: MouseEvent) {
-  // 只响应左键
   if (e.button !== 0) return;
-  // 排除交互元素（按钮等）
   const target = e.target as HTMLElement;
   if (target.closest("button, a, input, select, textarea")) return;
 
-  // 阻止默认行为避免文本选择
   e.preventDefault();
-  // 启动窗口拖拽（需要 capabilities 中 core:window:allow-start-dragging 权限）
+  // 启动窗口拖拽
   getCurrentWindow().startDragging().catch((err) => {
     console.error("startDragging failed", err);
   });

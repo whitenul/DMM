@@ -24,10 +24,7 @@ impl AppDataPath {
     }
 }
 
-/// 解析应用数据目录
-///
-/// - 开发环境（debug build）：`<project_root>/.dev/data/`
-/// - 安装环境（release build）：`<app_data_dir>/` (Tauri 标准)
+/// 解析应用数据目录，开发环境和生产环境自动适配
 pub fn resolve_app_data_dir<R: tauri::Runtime>(
     app: &tauri::AppHandle<R>,
 ) -> Result<PathBuf, AppError> {

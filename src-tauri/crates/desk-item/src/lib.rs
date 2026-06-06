@@ -4,15 +4,11 @@ use desk_core::error::AppError;
 use serde::Deserialize;
 use tauri::{plugin::TauriPlugin, Manager, Runtime};
 
-// ---------------------------------------------------------------------------
-// ItemState — managed Tauri state holding a dyn ItemRepo
-// ---------------------------------------------------------------------------
+// --- 项目状态 ---
 
 pub struct ItemState(pub Box<dyn ItemRepo>);
 
-// ---------------------------------------------------------------------------
-// ReorderEntry — deserialization target for the reorder_items command
-// ---------------------------------------------------------------------------
+// --- 排序条目 ---
 
 #[derive(Deserialize)]
 pub struct ReorderEntry {
@@ -20,9 +16,7 @@ pub struct ReorderEntry {
     pub sort_order: i32,
 }
 
-// ---------------------------------------------------------------------------
-// Tauri Commands (in a submodule to avoid __cmd__ macro name collisions)
-// ---------------------------------------------------------------------------
+// --- Tauri 命令 ---
 
 mod commands {
     use super::{AppError, Item, ItemState, ReorderEntry};
@@ -46,9 +40,7 @@ mod commands {
         arguments: Option<String>,
         working_dir: Option<String>,
     ) -> Result<Item, AppError> {
-        // TODO: Icon extraction will be handled by desk-icon plugin after item creation.
-        // The original create_item command extracted and saved the item icon here.
-        // When desk-icon is integrated, emit an event or call the icon plugin after creation.
+        // TODO: 图标提取由 desk-icon 插件处理
         state.0.create(
             category_id,
             &name,
@@ -95,7 +87,7 @@ mod commands {
 
         match item.item_type.as_str() {
             "Web" => {
-                // URL: 用 cmd /c start 在默认浏览器中打开，避免 ShellExecuteW COM 死锁
+                // URL: 用 cmd /c start 打开，避免 ShellExecuteW COM 死锁
                 std::process::Command::new("cmd")
                     .args(["/c", "start", "", &item.path])
                     .spawn()
@@ -105,7 +97,7 @@ mod commands {
                     })?;
             }
             "Folder" => {
-                // 文件夹: 用 explorer 打开，不会阻塞
+                // 文件夹: 用 explorer 打开
                 std::process::Command::new("explorer")
                     .arg(&item.path)
                     .spawn()
@@ -116,8 +108,6 @@ mod commands {
             }
             "Uwp" => {
                 // UWP 应用: 用 cmd /c start 启动
-                // 完整方案需要 IApplicationActivationManager COM 接口 + AUMID
-                // 当前存储的 path 是可执行文件路径，用 cmd start 作为兼容方案
                 std::process::Command::new("cmd")
                     .args(["/c", "start", "", &item.path])
                     .spawn()
@@ -137,7 +127,7 @@ mod commands {
                     match cmd.spawn() {
                         Ok(_) => {}
                         Err(_) => {
-                            // 回退: 用 cmd /c start 打开（支持文档等非可执行文件）
+                            // 回退: 用 cmd /c start 打开
                             std::process::Command::new("cmd")
                                 .args(["/c", "start", "", &item.path])
                                 .spawn()
@@ -148,8 +138,7 @@ mod commands {
                         }
                     }
                 } else {
-                    // 无参数: 用 cmd /c start 打开（支持 exe/文档/URL）
-                    // 这比 ShellExecuteW 更安全，不会导致 COM 死锁
+                    // 无参数: 用 cmd /c start 打开
                     std::process::Command::new("cmd")
                         .args(["/c", "start", "", &item.path])
                         .spawn()
@@ -200,9 +189,7 @@ mod commands {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Plugin init
-// ---------------------------------------------------------------------------
+// --- 插件初始化 ---
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     tauri::plugin::Builder::new("desk-item")

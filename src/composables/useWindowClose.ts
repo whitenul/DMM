@@ -7,22 +7,18 @@ import { useToastStore } from "@/stores/toast";
 import type { CloseBehavior } from "@/components/common/CloseConfirmDialog.vue";
 
 /**
- * 窗口关闭统一处理 composable（全局单例模式）
+ * 窗口关闭行为统一处理
  *
- * 职责：
- * 1. 监听 Rust 端 emit 的 "window-close-requested" 事件
- * 2. 根据 settings.close_behavior 决定行为：
- *    - "ask" → 弹出 CloseConfirmDialog 让用户选
- *    - "minimize_to_tray" → 直接 hide
- *    - "quit" → 调 quit_app 命令
- * 3. 提供程序化触发关闭的 API（用于 TitleBar 上的 X 按钮等）
+ * 监听 Rust 端 "window-close-requested" 事件，根据 settings.close_behavior 决定行为：
+ * - "ask" → 弹出 CloseConfirmDialog 让用户选
+ * - "minimize_to_tray" → 直接 hide
+ * - "quit" → 调 quit_app 命令
  *
- * ⚠️ 关键：confirmVisible 是模块级单例 ref，
- * 所有 useWindowClose() 调用共享同一个 ref，
+ * confirmVisible 是模块级单例 ref，所有 useWindowClose() 调用共享同一个 ref，
  * 确保 TitleBar 设置 visible=true 后 App.vue 的 CloseConfirmDialog 也能看到。
  */
 
-// ── 模块级单例状态 ──
+// --- 单例状态 ---
 const confirmVisible = ref(false);
 let unlisten: UnlistenFn | null = null;
 let listening = false;

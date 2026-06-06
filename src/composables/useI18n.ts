@@ -5,7 +5,7 @@ export type Locale = "zh-CN" | "en";
 
 const STORAGE_KEY = "dm-locale";
 
-/** 翻译字典 —— 设置相关（按需扩展） */
+/** 翻译字典 */
 const messages: Record<Locale, Record<string, string>> = {
   "zh-CN": {
     "settings.title": "设置",

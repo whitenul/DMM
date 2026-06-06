@@ -139,7 +139,7 @@ const bgLabels: Record<string, string> = { bgSolid: "底色", bgCard: "卡片", 
 const textLabels: Record<string, string> = { textPrimary: "主要", textSecondary: "次要", textTertiary: "三级", textDisabled: "禁用", textOnAccent: "反色", textOnDanger: "危险文字" };
 const borderLabels: Record<string, string> = { border: "边框", borderStrong: "强边框", borderAccent: "强调边框", divider: "分割线", overlay: "遮罩" };
 
-// 追踪哪些字段是手动修改的
+// 追踪手动修改的字段
 const manualAccentHover = ref(false);
 const manualAccentPressed = ref(false);
 
@@ -151,10 +151,9 @@ const form = reactive<{
   colors: {},
 });
 
-/** 获取当前 resolvedTheme 对应的 mode */
+/** 当前主题模式 */
 const currentMode = computed(() => themeStore.resolvedTheme);
 
-// 初始化表单
 watch(() => props.visible, (v) => {
   if (!v) return;
   if (props.theme) {
@@ -214,7 +213,6 @@ function resetField(field: "accentHover" | "accentPressed") {
   if (field === "accentPressed") manualAccentPressed.value = false;
 }
 
-// 实时预览样式
 const previewStyle = computed(() => {
   const mode = currentMode.value;
   return {

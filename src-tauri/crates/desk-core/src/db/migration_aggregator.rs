@@ -46,6 +46,7 @@ impl MigrationAggregator {
         self
     }
 
+    /// 执行所有未应用的迁移
     pub fn run_all(&self, conn: &mut Connection) -> Result<(), AppError> {
         conn.execute_batch(
             "CREATE TABLE IF NOT EXISTS desk_migrations (
@@ -97,7 +98,7 @@ impl MigrationAggregator {
         Ok(())
     }
 
-    /// 查看已应用的所有 migration
+    /// 查看已应用的所有迁移
     pub fn list_applied(&self, conn: &Connection) -> Result<Vec<(String, String, String)>, AppError> {
         let mut stmt = conn.prepare_cached(
             "SELECT plugin, name, applied_at FROM desk_migrations ORDER BY id",

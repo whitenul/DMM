@@ -4,8 +4,7 @@ use desk_core::error::AppError;
 use std::path::PathBuf;
 use tauri::{plugin::TauriPlugin, Manager, Runtime, State};
 
-/// Plugin-scoped state that stores the app data directory,
-/// so commands do not need an `AppHandle<R>` parameter.
+/// 插件作用域状态，存储应用数据目录
 pub struct SettingsState {
     pub app_data_dir: PathBuf,
 }
@@ -59,7 +58,7 @@ mod commands {
             let dword: u32 = key
                 .get_u32("AccentColor")
                 .map_err(|e| e.to_string())?;
-            // Windows DWM AccentColor: ABGR (0xAABBGGRR) → #RRGGBB
+            // DWM 强调色: ABGR → #RRGGBB
             let r = (dword & 0x0000FF) as u8;
             let g = ((dword >> 8) & 0xFF) as u8;
             let b = ((dword >> 16) & 0xFF) as u8;

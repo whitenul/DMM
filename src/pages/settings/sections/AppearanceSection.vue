@@ -139,14 +139,14 @@ const { t } = useI18n();
 
 const showEditor = ref(false);
 
-/** 正在编辑的主题（当前选中的主题，或 null 表示新建） */
+/** 当前编辑的主题 */
 const editingTheme = computed<ThemeDefinition | null>(() => {
   const id = themeStore.currentThemeId;
   const mode = themeStore.resolvedTheme;
   return themeStore.availableThemes.find((th: ThemeDefinition) => th.id === id && th.mode === mode) ?? null;
 });
 
-// ---- 选项配置 ----
+// --- 选项配置 ---
 
 const modeOptions = computed(() => [
   { value: "light", label: t("appearance.mode.light") },
@@ -172,7 +172,7 @@ const languageOptions = computed(() => [
   { value: "en", label: t("appearance.lang.en") },
 ]);
 
-// ---- 计算属性 ----
+// --- 计算属性 ---
 
 const currentMode = computed<ThemeMode>(
   () => (settingsStore.config?.appearance?.theme as ThemeMode) ?? "system"
@@ -190,7 +190,7 @@ const currentLanguage = computed(
   () => settingsStore.config?.appearance?.language ?? "zh-CN"
 );
 
-// ---- 事件处理 ----
+// --- 事件处理 ---
 
 async function onSelectBackgroundImage() {
   const { open } = await import("@tauri-apps/plugin-dialog");
@@ -213,7 +213,7 @@ async function onLanguageChange(lang: string) {
   await settingsStore.patchAppearance({ language: lang });
 }
 
-// ---- 主题编辑器 ----
+// --- 主题编辑器 ---
 
 async function onSaveTheme(theme: ThemeDefinition) {
   const result = await themeStore.importTheme(theme);
