@@ -1,7 +1,5 @@
 <template>
   <div class="bg-layer" />
-  <div class="bg-overlay" />
-  <div class="glass-bg" />
   <div class="app-layout glass-layer">
     <TitleBar />
     <div class="app-body">

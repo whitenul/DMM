@@ -129,7 +129,7 @@
    * 效果 Token — 独立于颜色，控制视觉效果
    * ============================================================ */
   --effect-glass-blur: 12px;
-  --effect-bg-opacity: 1;
+  --glass-base-opacity: 0.85;
   --effect-bg-blur: 0px;
   --app-opacity: 0;
   --effect-card-opacity: 1;
@@ -175,11 +175,12 @@
 }
 
 /* ============================================================
- * 窗口效果：Mica/Acrylic 时背景半透明
+ * 窗口效果：Mica/Acrylic 时降低 glass-layer 不透明度
+ * （系统材质已提供背景，UI 层只需轻着色）
  * ============================================================ */
 [data-window-effect="mica"],
 [data-window-effect="acrylic"] {
-  --effect-bg-opacity: 0.85;
+  --glass-base-opacity: 0.75;
   --effect-card-opacity: 0.92;
 }
 
@@ -188,9 +189,16 @@
 }
 
 /* ============================================================
- * 背景层系统 — 三层架构
- * bg-layer(z:0) → bg-overlay(z:1) → glass-layer(z:2)
- * 图片就是应用背景，透明度只作用于 bg-layer
+ * Background layer system — two-layer architecture
+ * bg-layer(z:0) → glass-layer(z:2)
+ *
+ * bg-layer: Background image or solid color; opacity fades with --app-opacity
+ * glass-layer: UI layer with adaptive opacity:
+ *   No image 85% / With image 55% / Mica+no image 75% / Mica+image 49%
+ *   All reduce smoothly as --app-opacity increases
+ *
+ * All transitions are CSS-driven for smooth gradual changes.
+ * No JS inline style overrides needed.
  * ============================================================ */
 .bg-layer {
   position: fixed;
@@ -201,50 +209,40 @@
   background-repeat: no-repeat;
   background-color: var(--color-bg-solid);
   transition: background-image 0.3s ease, filter 0.3s ease, opacity 0.3s ease;
-  /* 应用透明度：0=不透明(正常), 1=完全透明(透出桌面) */
+  /* Application opacity: 0=opaque(normal), 1=fully transparent(desktop visible) */
   opacity: calc(1 - var(--app-opacity, 0));
-  /* 模糊时扩大边缘避免白边（仅 blur > 0 时由 JS 动态添加） */
 }
 
-.bg-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1;
-  background: var(--color-bg-solid);
-  /* 有图时显示遮罩，且随应用透明度一起淡出 */
-  /* 无图时不显示（被 bg-layer 的纯色替代） */
-  opacity: calc(var(--has-bg-image, 0) * var(--effect-bg-opacity, 1) * (1 - var(--app-opacity, 0)));
-  transition: opacity 0.3s ease;
-  pointer-events: none;
-}
-
-/* 毛玻璃效果层 — 背景层和 UI 层分离 */
-/* glass-bg: 只负责背景和模糊，受 app-opacity 控制 */
-/* glass-layer: 只放 UI，永远 opaque */
-.glass-bg {
-  position: fixed;
-  inset: 0;
-  z-index: 2;
-  backdrop-filter: blur(var(--effect-glass-blur, 12px));
-  -webkit-backdrop-filter: blur(var(--effect-glass-blur, 12px));
-  background: var(--color-bg-solid);
-  opacity: calc(1 - var(--app-opacity, 0));
-  transition: opacity 0.3s ease;
-  pointer-events: none;
-}
-
-/* 高透明度时彻底关闭 backdrop-filter */
-[style*="--app-opacity: 1"] .glass-bg,
-[style*="--app-opacity: 0.8"] .glass-bg,
-[style*="--app-opacity: 0.9"] .glass-bg {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
+/* UI layer — background color controlled by color-mix, text/UI unaffected by opacity */
+/* With background image: lower opacity to let image show through */
+/* backdrop-filter blur reduces gradually as --app-opacity increases (no hard cutoff) */
+/* When --has-bg-image=1, blur is also disabled to avoid double-blur */
 .glass-layer {
   position: relative;
-  z-index: 3;
-  /* UI 层永远 opaque，不受透明度影响 */
+  z-index: 2;
+  /*
+   * Backdrop-filter blur — gradual reduction via CSS calc:
+   *   base blur × (1 - app-opacity) × (1 - has-bg-image)
+   * - As opacity increases, blur naturally fades to 0
+   * - When a background image is present, blur is disabled
+   * - No hard threshold, no JS override needed
+   */
+  backdrop-filter: blur(calc(var(--effect-glass-blur, 12px) * (1 - var(--app-opacity, 0)) * (1 - var(--has-bg-image, 0))));
+  -webkit-backdrop-filter: blur(calc(var(--effect-glass-blur, 12px) * (1 - var(--app-opacity, 0)) * (1 - var(--has-bg-image, 0))));
+  /*
+   * Opacity calculation:
+   *   Base --glass-base-opacity (default 0.85, Mica/Acrylic: 0.75)
+   *   With background image: reduce 35%: × (1 - --has-bg-image × 0.35)
+   *   Sync with app-opacity: × (1 - --app-opacity)
+   *   Minimum floor 5%: preserves a faint tint at max transparency
+   */
+  background: color-mix(
+    in srgb,
+    var(--color-bg-solid) calc(max(var(--glass-base-opacity, 0.85) * 100% * (1 - var(--has-bg-image, 0) * 0.35) * (1 - var(--app-opacity, 0)), 5%)),
+    transparent
+  );
+  /* Smooth transitions for opacity and blur changes */
+  transition: background 0.3s ease, backdrop-filter 0.3s ease, -webkit-backdrop-filter 0.3s ease;
 }
 
 * {

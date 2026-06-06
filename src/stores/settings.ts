@@ -20,7 +20,6 @@ export interface AppConfig {
     accent_source: "system" | "theme" | "custom";
     custom_accent_color: string | null;
     background_image: string | null;
-    bg_opacity: number;
     bg_blur: number;
     app_opacity: number;
   };
@@ -32,7 +31,7 @@ export interface AppConfig {
 const DEFAULT_CONFIG: AppConfig = {
   window: { x: 100, y: 100, width: 800, height: 600, edge_snap: true },
   shortcut: { global_search: "Ctrl+Shift+Space" },
-  appearance: { theme: "system", effect: "auto", language: "zh-CN", theme_id: "default", accent_source: "system" as const, custom_accent_color: null, background_image: null, bg_opacity: 1, bg_blur: 0, app_opacity: 0 },
+  appearance: { theme: "system", effect: "auto", language: "zh-CN", theme_id: "default", accent_source: "system" as const, custom_accent_color: null, background_image: null, bg_blur: 0, app_opacity: 0 },
   scan: { auto_scan_on_start: true, scan_start_menu: true, scan_uwp: true },
   close_behavior: "ask",
   autostart: false,

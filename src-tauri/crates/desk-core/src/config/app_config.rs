@@ -82,8 +82,6 @@ pub struct AppearanceConfig {
     pub custom_accent_color: Option<String>,
     #[serde(default)]
     pub background_image: Option<String>,
-    #[serde(default = "default_bg_opacity")]
-    pub bg_opacity: f32,
     #[serde(default = "default_bg_blur")]
     pub bg_blur: f32,
     #[serde(default = "default_app_opacity")]
@@ -95,7 +93,6 @@ fn default_effect() -> String { "auto".to_string() }
 fn default_language() -> String { "zh-CN".to_string() }
 fn default_theme_id() -> String { "default".to_string() }
 fn default_accent_source() -> String { "system".to_string() }
-fn default_bg_opacity() -> f32 { 1.0 }
 fn default_bg_blur() -> f32 { 0.0 }
 fn default_app_opacity() -> f32 { 0.0 }
 
@@ -109,9 +106,8 @@ impl Default for AppearanceConfig {
             accent_source: "system".to_string(),
             custom_accent_color: None,
             background_image: None,
-            bg_opacity: 1.0,
             bg_blur: 0.0,
-            app_opacity: 1.0,
+            app_opacity: 0.0,
         }
     }
 }

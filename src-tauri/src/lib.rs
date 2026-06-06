@@ -26,6 +26,20 @@ fn quit_app(state: tauri::State<'_, desk_core::db::DbState>) {
     std::process::exit(0);
 }
 
+/// 重置窗口背景色为完全透明
+/// 在 clearEffects() 后调用，防止 WebView2 回退到默认背景色
+#[tauri::command]
+fn reset_window_background(app: AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("main") {
+        window
+            .set_background_color(Some(tauri::window::Color(0, 0, 0, 0)))
+            .map_err(|e| format!("Failed to set background color: {e}"))?;
+        Ok(())
+    } else {
+        Err("Main window not found".to_string())
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -44,7 +58,7 @@ pub fn run() {
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             Some(vec![]),
         ))
-        .invoke_handler(tauri::generate_handler![quit_app])
+        .invoke_handler(tauri::generate_handler![quit_app, reset_window_background])
         .on_window_event(|window, event| {
             // 拦截所有路径触发的窗口关闭请求（X 按钮、Alt+F4、任务管理器右键关闭等）。
             // 决策权完全交给前端：
@@ -107,8 +121,8 @@ pub fn run() {
             app.handle().plugin(desk_web::init())?;
 
             if let Some(main_window) = app.get_webview_window("main") {
-                // Windows 透明窗口：必须显式设置 webview 背景色 alpha=0
-                // None 会重置为默认白色！必须传 alpha=0 的颜色
+                // Windows transparent window: must explicitly set webview background alpha=0.
+                // None resets to default white! Must pass alpha=0 color.
                 let _ = main_window.set_background_color(Some(tauri::window::Color(0, 0, 0, 0)));
 
                 let config_state = app.state::<ConfigState>();
@@ -121,17 +135,14 @@ pub fn run() {
                         config.window.x as f64,
                         config.window.y as f64,
                     ));
-                    let effects = match config.appearance.effect.as_str() {
-                        "mica" => vec![tauri::window::Effect::Mica],
-                        "acrylic" => vec![tauri::window::Effect::Acrylic],
-                        "none" => vec![],
-                        _ => vec![tauri::window::Effect::Mica, tauri::window::Effect::Acrylic],
-                    };
-                    let _ = main_window.set_effects(tauri::utils::config::WindowEffectsConfig {
-                        effects,
-                        ..Default::default()
-                    });
                 }
+
+                // DWM effects (Mica/Acrylic) are no longer applied.
+                // All visual appearance is handled by CSS for smoother transitions.
+                let _ = main_window.set_effects(tauri::utils::config::WindowEffectsConfig {
+                    effects: vec![],
+                    ..Default::default()
+                });
             }
 
             let show_item = MenuItemBuilder::with_id("show", "显示主窗口").build(app)?;

@@ -85,15 +85,15 @@
       />
     </SettingRow>
 
-    <!-- 应用透明度：值越高越透明，整个 app 一起变透明 -->
+    <!-- 应用透明度：值越高越透明，范围 5% ~ 95% -->
     <SettingRow
       :title="t('appearance.appOpacity')"
       :description="t('appearance.appOpacity.desc')"
     >
       <SettingSlider
         :model-value="currentAppOpacity"
-        :min="0"
-        :max="1"
+        :min="0.05"
+        :max="0.95"
         :step="0.05"
         unit="%"
         @update:model-value="(v) => themeStore.setAppOpacity(v)"
